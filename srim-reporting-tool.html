@@ -128,7 +128,7 @@
                 <div class="text-xs text-slate-400 mt-0.5">Excellence in Junior Academic Positions</div>
               </div>
               <div class="text-center rounded-lg p-3 bg-white border border-emerald-100">
-                <div class="text-xl font-black text-emerald-600">400–500</div>
+                <div class="text-xl font-black text-emerald-600">450–500</div>
                 <div class="text-xs font-bold text-slate-500 mt-1">Senior Benchmark</div>
                 <div class="text-xs text-slate-400 mt-0.5">Excellence in Senior Academic Positions</div>
               </div>
@@ -223,10 +223,10 @@
         <span>0</span>
         <span class="text-blue-500">180 Jr</span>
         <span class="text-blue-400">250</span>
-        <span class="text-emerald-500">400 Sr</span>
+        <span class="text-emerald-500">450 Sr</span>
         <span class="text-emerald-400">500</span>
         <span style="color:#C8102E">650 🏆</span>
-        <span class="text-slate-500">900 max</span>
+        <span class="text-slate-500">1300 max</span>
       </div>
     </div>
   </div>
@@ -392,9 +392,9 @@ const MAX_SCORED_S2     = 6;   // Stage 2: 6 × 10 × 2 = 120 pts
 const S2_MULT           = 2;
 const HOLISTIC_THRESH   = 4;
 const HOLISTIC_FACTOR   = 0.5;
-const SCORE_MAX         = 900;
+const SCORE_MAX         = 1300;
 const JUNIOR_MIN = 180; const JUNIOR_MAX = 250;
-const SENIOR_MIN = 400; const SENIOR_MAX = 500;
+const SENIOR_MIN = 450; const SENIOR_MAX = 500;
 const BADGE_THRESH = 650;
 
 // ─────────────────────────────────────────────────────────────────────────────
@@ -431,15 +431,17 @@ function dimBasePts(id) {
 
 function dimFinalPts(id) {
   const base = dimBasePts(id);
-  return state[id].stage === 2 ? base * S2_MULT : base;
+  const stagePts = state[id].stage === 2 ? base * S2_MULT : base;
+  return Math.round(stagePts * fundingMultiplier(id));
 }
 
 function calcScore() {
   let s1Pts = 0, s2Pts = 0, stage2Count = 0;
   DIMENSIONS.forEach(d => {
     const stg = state[d.id].stage;
-    if (stg === 1) s1Pts += dimBasePts(d.id);
-    if (stg === 2) { s2Pts += dimBasePts(d.id) * S2_MULT; stage2Count++; }
+    const fMult = fundingMultiplier(d.id);
+    if (stg === 1) s1Pts += Math.round(dimBasePts(d.id) * fMult);
+    if (stg === 2) { s2Pts += Math.round(dimBasePts(d.id) * S2_MULT * fMult); stage2Count++; }
   });
   const subtotal = s1Pts + s2Pts;
   const holistic = stage2Count >= HOLISTIC_THRESH ? Math.round(subtotal * HOLISTIC_FACTOR) : 0;
@@ -568,13 +570,14 @@ function activitiesHTML(dim) {
             <span class="absolute left-2.5 top-1/2 -translate-y-1/2 text-xs font-bold text-slate-400 pointer-events-none">€</span>
             <input type="text" inputmode="numeric" placeholder="e.g. 180,000"
               value="${escHtml(s.fundingDirect)}"
-              oninput="state['${dim.id}'].fundingDirect=this.value"
+              oninput="state['${dim.id}'].fundingDirect=this.value; updateFundingUI('${dim.id}')"
               class="w-full border border-slate-200 rounded-lg pl-6 pr-3 py-2 text-xs focus:outline-none focus:ring-1 text-slate-700 font-medium">
           </div>
           <div class="text-xs text-slate-400 mt-1">Portion allocated directly to UPF-BSM (incl. overheads, if applicable)</div>
         </div>
       </div>
       </div>
+      <div id="funding-triggers-${dim.id}" class="mt-1">${fundingTriggerHTML(dim.id)}</div>
     </div>`;
 }
 
@@ -606,7 +609,8 @@ function renderCardHTML(dim) {
   const s = state[dim.id];
   const pts     = dimFinalPts(dim.id);
   const isS2    = s.stage === 2;
-  const ptsMax  = isS2 ? MAX_SCORED_S2 * PTS_PER_INSTANCE * S2_MULT : MAX_SCORED_S1 * PTS_PER_INSTANCE;
+  const fMult   = fundingMultiplier(dim.id);
+  const ptsMax  = Math.round((isS2 ? MAX_SCORED_S2 * PTS_PER_INSTANCE * S2_MULT : MAX_SCORED_S1 * PTS_PER_INSTANCE) * fMult);
   const ptsColor= s.stage === 0 ? '#94a3b8' : isS2 ? '#059669' : '#3b82f6';
   const borderCls = s.stage === 1 && dimTotalInstances(dim.id) > 0 ? 'has-s1'
                   : s.stage === 2 && dimTotalInstances(dim.id) > 0 ? 'has-s2' : '';
@@ -685,6 +689,51 @@ function renderCardHTML(dim) {
   </div>`;
 }
 
+
+// ─────────────────────────────────────────────────────────────────────────────
+// FUNDING MULTIPLIER & TRIGGERS
+// ─────────────────────────────────────────────────────────────────────────────
+function parseFundingAmt(id) {
+  const raw = (state[id].fundingDirect || '').replace(/[^0-9.]/g, '');
+  return parseFloat(raw) || 0;
+}
+
+function fundingMultiplier(id) {
+  if (id !== 'funded' && id !== 'transfer') return 1;
+  if (!state[id] || state[id].stage === 0) return 1;
+  const amt = parseFundingAmt(id);
+  if (amt >= 300000) return 2.0;
+  if (amt >=  60000) return 1.5;
+  if (amt >=  40000) return 1.2;
+  return 1;
+}
+
+function fundingTriggerHTML(id) {
+  const amt = parseFundingAmt(id);
+  if (amt === 0) return '';
+  const mult = fundingMultiplier(id);
+  const parts = [];
+  if (mult > 1) {
+    const bg = mult >= 2 ? '#C8102E' : mult >= 1.5 ? '#059669' : '#d97706';
+    parts.push(`<span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-black text-white" style="background:${bg}">⚡ ×${mult} Score Boost Active</span>`);
+  }
+  if (amt >= 60000) {
+    parts.push(`<span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-bold" style="background:rgba(200,16,46,0.08);color:#C8102E;border:1px solid rgba(200,16,46,0.25)">✓ 10% FRIP Bonus triggered</span>`);
+    parts.push(`<span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-bold" style="background:rgba(200,16,46,0.08);color:#C8102E;border:1px solid rgba(200,16,46,0.25)">✓ 5% Academic Development Fund triggered</span>`);
+  } else if (amt >= 40000) {
+    parts.push(`<span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-bold" style="background:rgba(200,16,46,0.08);color:#C8102E;border:1px solid rgba(200,16,46,0.25)">✓ 5% Academic Development Fund triggered</span>`);
+  }
+  return parts.length ? `<div class="flex flex-wrap gap-1.5 mt-2">${parts.join('')}</div>` : '';
+}
+
+function updateFundingUI(id) {
+  // Update trigger badges without re-rendering inputs (preserves focus)
+  const trigEl = document.getElementById('funding-triggers-' + id);
+  if (trigEl) trigEl.innerHTML = fundingTriggerHTML(id);
+  refreshActivities(id);
+  updateScore();
+}
+
 // ─────────────────────────────────────────────────────────────────────────────
 // RENDER FUNCTIONS
 // ─────────────────────────────────────────────────────────────────────────────
@@ -708,7 +757,7 @@ function refreshActivities(id) {
   const s   = state[id];
   const isS2 = s.stage === 2;
   const pts  = dimFinalPts(id);
-  const ptsMax = isS2 ? MAX_SCORED_S2 * PTS_PER_INSTANCE * S2_MULT : MAX_SCORED_S1 * PTS_PER_INSTANCE;
+  const ptsMax = Math.round((isS2 ? MAX_SCORED_S2 * PTS_PER_INSTANCE * S2_MULT : MAX_SCORED_S1 * PTS_PER_INSTANCE) * fundingMultiplier(id));
   const ptsColor = isS2 ? '#059669' : '#3b82f6';
   const totalInst = dimTotalInstances(id);
   const scored    = Math.min(totalInst, MAX_SCORED_S1);
@@ -729,8 +778,8 @@ function refreshActivities(id) {
       ? `Stage 1 · ${totalInst} instance${totalInst!==1?'s':''} · ${dimBasePts(id)} pts (max ${MAX_SCORED_S1 * PTS_PER_INSTANCE})`
       : `Stage 1 · ${totalInst} instance${totalInst!==1?'s':''} · max reached (${MAX_SCORED_S1 * PTS_PER_INSTANCE} pts)`;
     if (s.stage === 2) sub = scored < MAX_SCORED_S1
-      ? `Stage 2 · ${totalInst} instance${totalInst!==1?'s':''} · ${pts} pts (max ${ptsMax})`
-      : `Stage 2 · ${totalInst} instance${totalInst!==1?'s':''} · max reached (${ptsMax} pts)`;
+      ? `Stage 2 · ${totalInst} instance${totalInst!==1?'s':''} · ${pts} pts (max ${ptsMax}${fundingMultiplier(id)>1?' · ×'+fundingMultiplier(id)+' boost':''})`
+      : `Stage 2 · ${totalInst} instance${totalInst!==1?'s':''} · max reached (${ptsMax} pts${fundingMultiplier(id)>1?' · ×'+fundingMultiplier(id)+' boost':''})`;
     subEl.textContent = sub;
   }
 
