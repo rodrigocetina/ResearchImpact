@@ -116,7 +116,7 @@
               <div class="flex justify-between"><span>5 dims × 70 pts (Stage 1 all)</span><span class="font-black">= 350 pts</span></div>
               <div class="flex justify-between"><span>5 dims × 120 pts (Stage 2 all)</span><span class="font-black text-emerald-600">= 600 pts</span></div>
               <div class="flex justify-between"><span>×1.5 Holistic bonus (+50%)</span><span class="font-black" style="color:#C8102E">= +300 pts</span></div>
-              <div class="flex justify-between border-t border-slate-200 pt-1.5 mt-1"><span class="font-black">Total Maximum</span><span class="font-black text-lg" style="color:#C8102E">= 900 pts</span></div>
+              <div class="flex justify-between border-t border-slate-200 pt-1.5 mt-1"><span class="font-black">Maximum Counted</span><span class="font-black text-lg" style="color:#C8102E">1,000 pts (capped)</span></div>
             </div>
           </div>
           <div class="rounded-xl p-4 border md:col-span-2" style="background:rgba(200,16,46,0.03);border-color:rgba(200,16,46,0.2)">
@@ -226,7 +226,7 @@
         <span class="text-emerald-500">450 Sr</span>
         <span class="text-emerald-400">500</span>
         <span style="color:#C8102E">650 🏆</span>
-        <span class="text-slate-500">1300 max</span>
+        <span class="text-slate-500">1000 max</span>
       </div>
     </div>
   </div>
@@ -392,7 +392,7 @@ const MAX_SCORED_S2     = 6;   // Stage 2: 6 × 10 × 2 = 120 pts
 const S2_MULT           = 2;
 const HOLISTIC_THRESH   = 4;
 const HOLISTIC_FACTOR   = 0.5;
-const SCORE_MAX         = 1300;
+const SCORE_MAX         = 1000;
 const JUNIOR_MIN = 180; const JUNIOR_MAX = 250;
 const SENIOR_MIN = 450; const SENIOR_MAX = 500;
 const BADGE_THRESH = 650;
@@ -445,7 +445,8 @@ function calcScore() {
   });
   const subtotal = s1Pts + s2Pts;
   const holistic = stage2Count >= HOLISTIC_THRESH ? Math.round(subtotal * HOLISTIC_FACTOR) : 0;
-  return { s1Pts, s2Pts, subtotal, holistic, total: subtotal + holistic, stage2Count };
+  const total = Math.min(subtotal + holistic, 1000);
+  return { s1Pts, s2Pts, subtotal, holistic, total, stage2Count };
 }
 
 function careerInfo(total, stage2Count) {
@@ -551,6 +552,28 @@ function activitiesHTML(dim) {
           <div class="text-xs font-bold uppercase tracking-wider px-2.5 pb-1" style="color:${isS2 ? '#059669' : '#3b82f6'}; opacity:0.7">+ Additional contribution</div>
           ${customRow}
         </div>
+}
+
+function projectTypesHTML(dim) {
+  if (!dim.projectTypes) return '';
+  const s = state[dim.id];
+  if (s.stage === 0) return '';
+  const chips = dim.projectTypes.map(pt => {
+    const sel = s.projectTypes.has(pt.id);
+    return `<span class="ptype-chip ${sel ? 'selected' : ''}" onclick="togglePType('${dim.id}','${pt.id}')">${pt.label}</span>`;
+  }).join('');
+  return `
+    <div id="ptypes-${dim.id}" class="mb-3">
+      <div class="text-xs font-black uppercase tracking-wider text-slate-400 mb-2">
+        <svg xmlns="http://www.w3.org/2000/svg" width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" class="inline mb-0.5"><polyline points="22 12 18 12 15 21 9 3 6 12 2 12"/></svg>
+        Funding / Project Type <span class="font-normal normal-case">(select all that apply)</span>
+      </div>
+      <div class="flex flex-wrap gap-1.5 mb-2">${chips}</div>
+      <div class="flex items-center gap-2">
+        <span class="text-xs text-slate-400 font-bold shrink-0">Other:</span>
+        <input type="text" placeholder="Describe other funding source…" value="${escHtml(s.otherType)}"
+          oninput="state['${dim.id}'].otherType=this.value"
+          class="flex-1 border border-slate-200 rounded-lg px-2.5 py-1.5 text-xs focus:outline-none focus:ring-1 text-slate-600">
 
       <div class="grid grid-cols-2 gap-3 mt-3 pt-3 border-t border-dashed" style="border-color:rgba(200,16,46,0.2)">
         <div>
@@ -576,31 +599,7 @@ function activitiesHTML(dim) {
           <div class="text-xs text-slate-400 mt-1">Portion allocated directly to UPF-BSM (incl. overheads, if applicable)</div>
         </div>
       </div>
-      </div>
       <div id="funding-triggers-${dim.id}" class="mt-1">${fundingTriggerHTML(dim.id)}</div>
-    </div>`;
-}
-
-function projectTypesHTML(dim) {
-  if (!dim.projectTypes) return '';
-  const s = state[dim.id];
-  if (s.stage === 0) return '';
-  const chips = dim.projectTypes.map(pt => {
-    const sel = s.projectTypes.has(pt.id);
-    return `<span class="ptype-chip ${sel ? 'selected' : ''}" onclick="togglePType('${dim.id}','${pt.id}')">${pt.label}</span>`;
-  }).join('');
-  return `
-    <div id="ptypes-${dim.id}" class="mb-3">
-      <div class="text-xs font-black uppercase tracking-wider text-slate-400 mb-2">
-        <svg xmlns="http://www.w3.org/2000/svg" width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" class="inline mb-0.5"><polyline points="22 12 18 12 15 21 9 3 6 12 2 12"/></svg>
-        Funding / Project Type <span class="font-normal normal-case">(select all that apply)</span>
-      </div>
-      <div class="flex flex-wrap gap-1.5 mb-2">${chips}</div>
-      <div class="flex items-center gap-2">
-        <span class="text-xs text-slate-400 font-bold shrink-0">Other:</span>
-        <input type="text" placeholder="Describe other funding source…" value="${escHtml(s.otherType)}"
-          oninput="state['${dim.id}'].otherType=this.value"
-          class="flex-1 border border-slate-200 rounded-lg px-2.5 py-1.5 text-xs focus:outline-none focus:ring-1 text-slate-600">
       </div>
     </div>`;
 }
