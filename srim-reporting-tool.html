@@ -569,13 +569,13 @@ function projectTypesHTML(dim) {
         Funding / Project Type <span class="font-normal normal-case">(select all that apply)</span>
       </div>
       <div class="flex flex-wrap gap-1.5 mb-2">${chips}</div>
-      <div class="flex items-center gap-2">
+      <div class="flex items-center gap-2 mb-3">
         <span class="text-xs text-slate-400 font-bold shrink-0">Other:</span>
         <input type="text" placeholder="Describe other funding source…" value="${escHtml(s.otherType)}"
           oninput="state['${dim.id}'].otherType=this.value"
           class="flex-1 border border-slate-200 rounded-lg px-2.5 py-1.5 text-xs focus:outline-none focus:ring-1 text-slate-600">
-
-      <div class="grid grid-cols-2 gap-3 mt-3 pt-3 border-t border-dashed" style="border-color:rgba(200,16,46,0.2)">
+      </div>
+      <div class="grid grid-cols-2 gap-3 pt-3 border-t border-dashed" style="border-color:rgba(200,16,46,0.2)">
         <div>
           <label class="block text-xs font-bold text-slate-500 uppercase tracking-wider mb-1">Total Funding Amount</label>
           <div class="relative">
@@ -599,10 +599,10 @@ function projectTypesHTML(dim) {
           <div class="text-xs text-slate-400 mt-1">Portion allocated directly to UPF-BSM (incl. overheads, if applicable)</div>
         </div>
       </div>
-      <div id="funding-triggers-${dim.id}" class="mt-1">${fundingTriggerHTML(dim.id)}</div>
-      </div>
+      <div id="funding-triggers-${dim.id}" class="mt-2">${fundingTriggerHTML(dim.id)}</div>
     </div>`;
 }
+
 
 function renderCardHTML(dim) {
   const s = state[dim.id];
