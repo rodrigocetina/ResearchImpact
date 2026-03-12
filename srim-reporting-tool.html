@@ -408,10 +408,7 @@ DIMENSIONS.forEach(d => {
     customText:     '',
     customCount:    0,
     evidence:       '',
-    projectTypes:   new Set(),
-    otherType:      '',
-    fundingTotal:   '',
-    fundingDirect:  ''
+    projects:       [{ types: new Set(), otherType: '', fundingTotal: '', fundingDirect: '' }]
   };
 });
 
@@ -560,47 +557,69 @@ function projectTypesHTML(dim) {
   if (!dim.projectTypes) return '';
   const s = state[dim.id];
   if (s.stage === 0) return '';
-  const chips = dim.projectTypes.map(pt => {
-    const sel = s.projectTypes.has(pt.id);
-    return `<span class="ptype-chip ${sel ? 'selected' : ''}" onclick="togglePType('${dim.id}','${pt.id}')">${pt.label}</span>`;
+
+  const projectCards = s.projects.map((proj, pi) => {
+    const chips = dim.projectTypes.map(pt => {
+      const sel = proj.types.has(pt.id);
+      return `<span class="ptype-chip ${sel ? 'selected' : ''}" onclick="togglePType('${dim.id}','${pt.id}',${pi})">${pt.label}</span>`;
+    }).join('');
+
+    const removeBtn = s.projects.length > 1
+      ? `<button onclick="removeProject('${dim.id}',${pi})"
+           class="text-xs font-bold text-slate-400 hover:text-red-500 transition-colors leading-none">&#x2715; Remove</button>`
+      : '';
+
+    return `
+      <div class="rounded-xl mb-2 p-3" style="border:1.5px solid rgba(200,16,46,0.18);background:rgba(200,16,46,0.025)">
+        <div class="flex items-center justify-between mb-2">
+          <div class="text-xs font-black uppercase tracking-wider" style="color:#C8102E">Project ${pi + 1}</div>
+          ${removeBtn}
+        </div>
+        <div class="text-xs font-black uppercase tracking-wider text-slate-400 mb-1.5">
+          <svg xmlns="http://www.w3.org/2000/svg" width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" class="inline mb-0.5"><polyline points="22 12 18 12 15 21 9 3 6 12 2 12"/></svg>
+          Funding / Project Type <span class="font-normal normal-case">(select all that apply)</span>
+        </div>
+        <div class="flex flex-wrap gap-1.5 mb-2">${chips}</div>
+        <div class="flex items-center gap-2 mb-3">
+          <span class="text-xs text-slate-400 font-bold shrink-0">Other:</span>
+          <input type="text" placeholder="Describe other funding source&hellip;" value="${escHtml(proj.otherType)}"
+            oninput="state['${dim.id}'].projects[${pi}].otherType=this.value"
+            class="flex-1 border border-slate-200 rounded-lg px-2.5 py-1.5 text-xs focus:outline-none focus:ring-1 text-slate-600">
+        </div>
+        <div class="grid grid-cols-2 gap-3 pt-3 border-t border-dashed" style="border-color:rgba(200,16,46,0.2)">
+          <div>
+            <label class="block text-xs font-bold text-slate-500 uppercase tracking-wider mb-1">Total Funding Amount</label>
+            <div class="relative">
+              <span class="absolute left-2.5 top-1/2 -translate-y-1/2 text-xs font-bold text-slate-400 pointer-events-none">&euro;</span>
+              <input type="text" inputmode="numeric" placeholder="e.g. 250,000"
+                value="${escHtml(proj.fundingTotal)}"
+                oninput="state['${dim.id}'].projects[${pi}].fundingTotal=this.value"
+                class="w-full border border-slate-200 rounded-lg pl-6 pr-3 py-2 text-xs focus:outline-none focus:ring-1 text-slate-700 font-medium">
+            </div>
+            <div class="text-xs text-slate-400 mt-1">Total awarded across all partners</div>
+          </div>
+          <div>
+            <label class="block text-xs font-bold text-slate-500 uppercase tracking-wider mb-1">Direct Income to UPF-BSM</label>
+            <div class="relative">
+              <span class="absolute left-2.5 top-1/2 -translate-y-1/2 text-xs font-bold text-slate-400 pointer-events-none">&euro;</span>
+              <input type="text" inputmode="numeric" placeholder="e.g. 180,000"
+                value="${escHtml(proj.fundingDirect)}"
+                oninput="state['${dim.id}'].projects[${pi}].fundingDirect=this.value; updateFundingUI('${dim.id}')"
+                class="w-full border border-slate-200 rounded-lg pl-6 pr-3 py-2 text-xs focus:outline-none focus:ring-1 text-slate-700 font-medium">
+            </div>
+            <div class="text-xs text-slate-400 mt-1">Portion allocated directly to UPF-BSM</div>
+          </div>
+        </div>
+      </div>`;
   }).join('');
+
   return `
     <div id="ptypes-${dim.id}" class="mb-3">
-      <div class="text-xs font-black uppercase tracking-wider text-slate-400 mb-2">
-        <svg xmlns="http://www.w3.org/2000/svg" width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" class="inline mb-0.5"><polyline points="22 12 18 12 15 21 9 3 6 12 2 12"/></svg>
-        Funding / Project Type <span class="font-normal normal-case">(select all that apply)</span>
-      </div>
-      <div class="flex flex-wrap gap-1.5 mb-2">${chips}</div>
-      <div class="flex items-center gap-2 mb-3">
-        <span class="text-xs text-slate-400 font-bold shrink-0">Other:</span>
-        <input type="text" placeholder="Describe other funding source…" value="${escHtml(s.otherType)}"
-          oninput="state['${dim.id}'].otherType=this.value"
-          class="flex-1 border border-slate-200 rounded-lg px-2.5 py-1.5 text-xs focus:outline-none focus:ring-1 text-slate-600">
-      </div>
-      <div class="grid grid-cols-2 gap-3 pt-3 border-t border-dashed" style="border-color:rgba(200,16,46,0.2)">
-        <div>
-          <label class="block text-xs font-bold text-slate-500 uppercase tracking-wider mb-1">Total Funding Amount</label>
-          <div class="relative">
-            <span class="absolute left-2.5 top-1/2 -translate-y-1/2 text-xs font-bold text-slate-400 pointer-events-none">€</span>
-            <input type="text" inputmode="numeric" placeholder="e.g. 250,000"
-              value="${escHtml(s.fundingTotal)}"
-              oninput="state['${dim.id}'].fundingTotal=this.value"
-              class="w-full border border-slate-200 rounded-lg pl-6 pr-3 py-2 text-xs focus:outline-none focus:ring-1 text-slate-700 font-medium">
-          </div>
-          <div class="text-xs text-slate-400 mt-1">Total awarded across all partners</div>
-        </div>
-        <div>
-          <label class="block text-xs font-bold text-slate-500 uppercase tracking-wider mb-1">Direct Income to UPF-BSM</label>
-          <div class="relative">
-            <span class="absolute left-2.5 top-1/2 -translate-y-1/2 text-xs font-bold text-slate-400 pointer-events-none">€</span>
-            <input type="text" inputmode="numeric" placeholder="e.g. 180,000"
-              value="${escHtml(s.fundingDirect)}"
-              oninput="state['${dim.id}'].fundingDirect=this.value; updateFundingUI('${dim.id}')"
-              class="w-full border border-slate-200 rounded-lg pl-6 pr-3 py-2 text-xs focus:outline-none focus:ring-1 text-slate-700 font-medium">
-          </div>
-          <div class="text-xs text-slate-400 mt-1">Portion allocated directly to UPF-BSM (incl. overheads, if applicable)</div>
-        </div>
-      </div>
+      ${projectCards}
+      <button onclick="addProject('${dim.id}')"
+        class="w-full text-xs font-black py-2 rounded-xl border-2 border-dashed border-slate-200 text-slate-400 hover:border-red-300 hover:text-red-400 transition-colors mt-1">
+        + Add Another Project
+      </button>
       <div id="funding-triggers-${dim.id}" class="mt-2">${fundingTriggerHTML(dim.id)}</div>
     </div>`;
 }
@@ -695,8 +714,11 @@ function renderCardHTML(dim) {
 // FUNDING MULTIPLIER & TRIGGERS
 // ─────────────────────────────────────────────────────────────────────────────
 function parseFundingAmt(id) {
-  const raw = (state[id].fundingDirect || '').replace(/[^0-9.]/g, '');
-  return parseFloat(raw) || 0;
+  if (!state[id] || !state[id].projects) return 0;
+  return state[id].projects.reduce((sum, p) => {
+    const raw = (p.fundingDirect || '').replace(/[^0-9.]/g, '');
+    return sum + (parseFloat(raw) || 0);
+  }, 0);
 }
 
 function fundingMultiplier(id) {
@@ -714,6 +736,13 @@ function fundingTriggerHTML(id) {
   if (amt === 0) return '';
   const mult = fundingMultiplier(id);
   const parts = [];
+  const nProjects = (state[id].projects || []).filter(p => {
+    const raw = (p.fundingDirect || '').replace(/[^0-9.]/g, '');
+    return parseFloat(raw) > 0;
+  }).length;
+  if (nProjects > 1) {
+    parts.push(`<span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-bold text-slate-600" style="background:rgba(0,0,0,0.05)">&#931; ${nProjects} projects &middot; &euro;${amt.toLocaleString()} total direct income</span>`);
+  }
   if (mult > 1) {
     const bg = mult >= 2 ? '#C8102E' : mult >= 1.5 ? '#059669' : '#d97706';
     parts.push(`<span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-black text-white" style="background:${bg}">⚡ ×${mult} Score Boost Active</span>`);
@@ -800,6 +829,7 @@ function setStage(id, stage) {
   s.stage       = stage;
   s.actCounts   = {};
   s.customCount = 0;
+  if (stage === 0) s.projects = [{ types: new Set(), otherType: '', fundingTotal: '', fundingDirect: '' }];
   renderCard(id);
   updateScore();
 }
@@ -819,15 +849,30 @@ function incCustom(id, delta) {
   updateScore();
 }
 
-function togglePType(dimId, typeId) {
-  const pt = state[dimId].projectTypes;
-  if (pt.has(typeId)) pt.delete(typeId); else pt.add(typeId);
-  // Update just the chip visuals
+function togglePType(dimId, typeId, projIdx) {
+  const proj = state[dimId].projects[projIdx];
+  if (proj.types.has(typeId)) proj.types.delete(typeId); else proj.types.add(typeId);
   const el = document.getElementById('ptypes-' + dimId);
   if (el) {
     const dim = DIMENSIONS.find(d => d.id === dimId);
     el.outerHTML = projectTypesHTML(dim);
   }
+}
+
+function addProject(id) {
+  state[id].projects.push({ types: new Set(), otherType: '', fundingTotal: '', fundingDirect: '' });
+  const el = document.getElementById('ptypes-' + id);
+  if (el) { const dim = DIMENSIONS.find(d => d.id === id); el.outerHTML = projectTypesHTML(dim); }
+  updateScore();
+}
+
+function removeProject(id, idx) {
+  if (state[id].projects.length <= 1) return;
+  state[id].projects.splice(idx, 1);
+  const el = document.getElementById('ptypes-' + id);
+  if (el) { const dim = DIMENSIONS.find(d => d.id === id); el.outerHTML = projectTypesHTML(dim); }
+  updateFundingUI(id);
+  updateScore();
 }
 
 function escHtml(str) {
@@ -910,19 +955,23 @@ function updatePrintSummary() {
     const inst = dimTotalInstances(d.id);
     // Project types for funded/transfer
     let ptLabel = '';
-    if (s.projectTypes && s.projectTypes.size > 0) {
-      const selected = (d.projectTypes||[]).filter(p => s.projectTypes.has(p.id)).map(p=>p.label);
-      if (s.otherType) selected.push('Other: '+s.otherType);
+    if (s.projects) {
+      const allTypes = new Set();
+      const otherTypes = [];
+      s.projects.forEach(p => { p.types.forEach(t => allTypes.add(t)); if (p.otherType) otherTypes.push(p.otherType); });
+      const selected = (d.projectTypes||[]).filter(p => allTypes.has(p.id)).map(p=>p.label);
+      if (otherTypes.length) otherTypes.forEach(t => selected.push('Other: '+t));
       ptLabel = selected.length ? ` · ${selected.join(', ')}` : '';
-    } else if (s.otherType) {
-      ptLabel = ` · Other: ${escHtml(s.otherType)}`;
     }
     let fundingLabel = '';
-    if (s.fundingTotal || s.fundingDirect) {
-      const fp = [];
-      if (s.fundingTotal)  fp.push(`Total: €${escHtml(s.fundingTotal)}`);
-      if (s.fundingDirect) fp.push(`UPF-BSM direct: €${escHtml(s.fundingDirect)}`);
-      fundingLabel = `<span class="text-slate-400 ml-2 font-normal">[${fp.join(' · ')}]</span>`;
+    if (s.projects && s.projects.some(p => p.fundingTotal || p.fundingDirect)) {
+      const fp = s.projects.map((p, pi) => {
+        const parts = [];
+        if (p.fundingTotal)  parts.push(`Total: &euro;${escHtml(p.fundingTotal)}`);
+        if (p.fundingDirect) parts.push(`UPF-BSM: &euro;${escHtml(p.fundingDirect)}`);
+        return parts.length ? `P${pi+1}: ${parts.join(', ')}` : null;
+      }).filter(Boolean);
+      fundingLabel = fp.length ? `<span class="text-slate-400 ml-2 font-normal">[${fp.join(' &middot; ')}]</span>` : '';
     }
     return `<div class="text-xs text-slate-600 flex justify-between border-t border-slate-50 pt-1.5 mt-1.5 gap-4">
       <span class="font-semibold">${d.title}${ptLabel}</span>${fundingLabel}
