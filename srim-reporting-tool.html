@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
-  <title>SRIM Self-Report Tool v2 (Mixed) — UPF-BSM</title>
+  <title>SRIM Self-Report Tool Lambda — UPF-BSM</title>
   <script src="https://cdn.tailwindcss.com"></script>
   <style>
     body { font-family: ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Arial, sans-serif; }
@@ -200,7 +200,7 @@
         <div class="text-slate-600 font-black">=</div>
         <div class="text-center">
           <div class="text-xs font-bold text-slate-500 uppercase tracking-wider">Total</div>
-          <div id="score-total" class="text-3xl font-black text-white">0</div>
+          <div id="score-total" class="text-3xl font-black text-white">0<span class="text-sm font-bold text-slate-400 ml-1">XP</span></div>
         </div>
       </div>
       <!-- Career badge -->
@@ -214,14 +214,14 @@
       <div class="h-2.5 bg-slate-700 rounded-full overflow-hidden">
         <div id="score-bar" class="score-bar h-full rounded-full" style="width:0%;background:linear-gradient(90deg,#3b82f6,#059669,#C8102E)"></div>
       </div>
-      <div class="flex justify-between text-xs text-slate-600 mt-1 font-bold select-none">
-        <span>0</span>
-        <span class="text-blue-500">180 Jr</span>
-        <span class="text-blue-400">250</span>
-        <span class="text-emerald-500">450 Sr</span>
-        <span class="text-emerald-400">500</span>
-        <span style="color:#C8102E">650 🏆</span>
-        <span class="text-slate-500">1000 max</span>
+      <div class="relative mt-1 select-none" style="height:1.25rem;">
+        <span class="absolute text-xs font-bold text-slate-500"   style="left:0%;transform:translateX(0%)">0</span>
+        <span class="absolute text-xs font-bold text-blue-500"    style="left:18%;transform:translateX(-50%)">180 Jr</span>
+        <span class="absolute text-xs font-bold text-blue-400"    style="left:25%;transform:translateX(-50%)">250</span>
+        <span class="absolute text-xs font-bold text-emerald-500" style="left:45%;transform:translateX(-50%)">450 Sr</span>
+        <span class="absolute text-xs font-bold text-emerald-400" style="left:50%;transform:translateX(-50%)">500</span>
+        <span class="absolute text-xs font-bold" style="left:65%;transform:translateX(-50%);color:#C8102E">650 &#127942;</span>
+        <span class="absolute text-xs font-bold text-slate-500"   style="left:100%;transform:translateX(-100%)">1000 max</span>
       </div>
     </div>
   </div>
@@ -404,10 +404,7 @@ DIMENSIONS.forEach(d => {
     customText:     '',
     customCount:    0,
     evidence:       '',
-    projectTypes:   new Set(),
-    otherType:      '',
-    fundingTotal:   '',
-    fundingDirect:  ''
+    projects:       [{ types: new Set(), otherType: '', fundingTotal: '', fundingDirect: '' }]
   };
 });
 
@@ -430,7 +427,9 @@ function dimBasePts(id) {
   if (!s.active) return 0;
   const s1inst = Object.values(s.s1Counts).reduce((a,b)=>a+b, 0) + s.customCount;
   const s2inst = Object.values(s.s2Counts).reduce((a,b)=>a+b, 0);
-  return Math.min(s1inst * PTS_PER_INSTANCE + s2inst * PTS_PER_INSTANCE * S2_MULT, 120);
+  const s1pts = Math.min(s1inst * PTS_PER_INSTANCE, 70); // S1 capped at 70 pts per dimension
+  const s2pts = s2inst * PTS_PER_INSTANCE * S2_MULT;
+  return Math.min(s1pts + s2pts, 120); // combined cap remains 120
 }
 
 function dimFinalPts(id) {
@@ -522,16 +521,18 @@ function activitiesHTML(dim) {
   const s2rows = dim.s2_activities.map((act, idx) => activityRowHTML(dim.id, idx, act, true, false)).join('');
   const s1inst = Object.values(s.s1Counts).reduce((a,b)=>a+b, 0) + s.customCount;
   const s2inst = Object.values(s.s2Counts).reduce((a,b)=>a+b, 0);
-  const rawPts = s1inst * PTS_PER_INSTANCE + s2inst * PTS_PER_INSTANCE * S2_MULT;
-  const atCap = rawPts >= 120;
+  const s1pts  = Math.min(s1inst * PTS_PER_INSTANCE, 70);
+  const s2pts  = s2inst * PTS_PER_INSTANCE * S2_MULT;
+  const atS1Cap = s1inst * PTS_PER_INSTANCE >= 70;
+  const atCombinedCap = (s1pts + s2pts) >= 120;
   return `
     <div class="rounded-xl mb-2" style="background:rgba(59,130,246,0.03);border:1px solid rgba(59,130,246,0.12);">
       <div class="px-3 pt-3 pb-1">
         <div class="flex items-baseline justify-between mb-1">
-          <div class="text-xs font-black uppercase tracking-wider text-blue-700">&#9711; Stage 1 Activities &#8212; ${dim.s1_label}</div>
+          <div class="text-xs font-black uppercase tracking-wider text-blue-700">&#9711; Stage 1 &#8212; ${dim.s1_label}</div>
           <div class="text-xs text-slate-400">each = ${PTS_PER_INSTANCE} pts</div>
         </div>
-        <div class="text-xs text-slate-400 mb-2">Click <strong>+</strong> to record each instance. You may add the same activity multiple times.</div>
+        <div class="text-xs text-slate-400 mb-2">Click <strong>+</strong> to record each instance. You may log the same activity multiple times.</div>
       </div>
       <div class="px-1 pb-2 space-y-0.5">
         ${s1rows}
@@ -540,11 +541,12 @@ function activitiesHTML(dim) {
           ${customRow}
         </div>
       </div>
+      ${atS1Cap ? '<div class="text-xs font-black text-blue-700 text-center py-1.5 px-3 mx-2 mb-2 rounded-lg" style="background:rgba(59,130,246,0.08);border:1px solid rgba(59,130,246,0.25)">&#9888; Stage 1 cap reached (70 pts) &mdash; add Stage 2 activities to score higher</div>' : ''}
     </div>
     <div class="rounded-xl mb-2" style="background:rgba(5,150,105,0.03);border:1px solid rgba(5,150,105,0.15);">
       <div class="px-3 pt-3 pb-1">
         <div class="flex items-baseline justify-between mb-1">
-          <div class="text-xs font-black uppercase tracking-wider text-emerald-700">&#9733; Stage 2 Activities &#8212; ${dim.s2_label}</div>
+          <div class="text-xs font-black uppercase tracking-wider text-emerald-700">&#9733; Stage 2 &#8212; ${dim.s2_label}</div>
           <div class="text-xs text-slate-400">each = ${PTS_PER_INSTANCE * S2_MULT} pts (&#215;2)</div>
         </div>
         <div class="text-xs text-slate-400 mb-2">Higher-impact contributions, worth double points.</div>
@@ -553,54 +555,119 @@ function activitiesHTML(dim) {
         ${s2rows}
       </div>
     </div>
-    ${atCap ? '<div class="text-xs font-black text-amber-700 text-center py-1.5 px-3 rounded-lg mb-2" style="background:rgba(217,119,6,0.08);border:1px solid rgba(217,119,6,0.25)">&#9888; 120 pt cap reached &mdash; additional instances do not add to the score</div>' : ''}`;
+    ${atCombinedCap ? '<div class="text-xs font-black text-amber-700 text-center py-1.5 px-3 rounded-lg mb-2" style="background:rgba(217,119,6,0.08);border:1px solid rgba(217,119,6,0.25)">&#9888; 120 pt cap reached &mdash; additional instances do not add to the score</div>' : ''}`;
 }
 
+
 function projectTypesHTML(dim) {
-  if (!dim.projectTypes) return '';
+  if (!dim.projectTypes) return '';          // Dims 1, 4, 5 — no funding section
   const s = state[dim.id];
-  if (s.stage === 0) return '';
-  const chips = dim.projectTypes.map(pt => {
-    const sel = s.projectTypes.has(pt.id);
-    return `<span class="ptype-chip ${sel ? 'selected' : ''}" onclick="togglePType('${dim.id}','${pt.id}')">${pt.label}</span>`;
+  if (!s.active) return '';                  // Dimension not yet active
+
+  const hasS2 = hasS2Activity(dim.id);
+
+  // ── S1 only: chips only, multiple projects, no Other field, no funding amounts ─
+  if (!hasS2) {
+    const s1Cards = s.projects.map((proj, pi) => {
+      const chips = dim.projectTypes.map(pt => {
+        const sel = proj.types.has(pt.id);
+        return `<span class="ptype-chip ${sel ? 'selected' : ''}" onclick="togglePType('${dim.id}','${pt.id}',${pi})">${pt.label}</span>`;
+      }).join('');
+      const removeBtn = s.projects.length > 1
+        ? `<button onclick="removeProject('${dim.id}',${pi})"
+             class="text-xs font-bold text-slate-400 hover:text-red-500 transition-colors leading-none">&#x2715; Remove</button>`
+        : '';
+      return `
+        <div class="rounded-xl mb-2 p-3" style="border:1.5px solid rgba(59,130,246,0.18);background:rgba(59,130,246,0.02)">
+          <div class="flex items-center justify-between mb-2">
+            <div class="text-xs font-black uppercase tracking-wider text-blue-600">Project ${pi + 1}</div>
+            ${removeBtn}
+          </div>
+          <div class="text-xs font-black uppercase tracking-wider text-slate-400 mb-1.5">
+            <svg xmlns="http://www.w3.org/2000/svg" width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" class="inline mb-0.5"><polyline points="22 12 18 12 15 21 9 3 6 12 2 12"/></svg>
+            Grant / Project Type <span class="font-normal normal-case">(select all that apply)</span>
+          </div>
+          <div class="flex flex-wrap gap-1.5">${chips}</div>
+        </div>`;
+    }).join('');
+    return `
+      <div id="ptypes-${dim.id}" class="mb-3">
+        ${s1Cards}
+        <button onclick="addProject('${dim.id}')"
+          class="w-full text-xs font-black py-2 rounded-xl border-2 border-dashed border-slate-200 text-slate-400 hover:border-blue-300 hover:text-blue-400 transition-colors mt-1">
+          + Add Another Project
+        </button>
+        <div class="text-xs text-slate-400 text-center py-1.5 mt-2 rounded-lg" style="border:1px dashed rgba(59,130,246,0.2);background:rgba(59,130,246,0.02)">
+          &#9733; Add a Stage 2 activity above to report funding amounts &amp; unlock score multipliers
+        </div>
+        <div id="funding-triggers-${dim.id}"></div>
+      </div>`;
+  }
+
+  // ── S2 present: full project cards with Other + funding amounts ──────────────
+  const projectCards = s.projects.map((proj, pi) => {
+    const chips = dim.projectTypes.map(pt => {
+      const sel = proj.types.has(pt.id);
+      return `<span class="ptype-chip ${sel ? 'selected' : ''}" onclick="togglePType('${dim.id}','${pt.id}',${pi})">${pt.label}</span>`;
+    }).join('');
+
+    const removeBtn = s.projects.length > 1
+      ? `<button onclick="removeProject('${dim.id}',${pi})"
+           class="text-xs font-bold text-slate-400 hover:text-red-500 transition-colors leading-none">&#x2715; Remove</button>`
+      : '';
+
+    return `
+      <div class="rounded-xl mb-2 p-3" style="border:1.5px solid rgba(200,16,46,0.18);background:rgba(200,16,46,0.025)">
+        <div class="flex items-center justify-between mb-2">
+          <div class="text-xs font-black uppercase tracking-wider" style="color:#C8102E">Project ${pi + 1}</div>
+          ${removeBtn}
+        </div>
+        <div class="text-xs font-black uppercase tracking-wider text-slate-400 mb-1.5">
+          <svg xmlns="http://www.w3.org/2000/svg" width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" class="inline mb-0.5"><polyline points="22 12 18 12 15 21 9 3 6 12 2 12"/></svg>
+          Funding / Project Type <span class="font-normal normal-case">(select all that apply)</span>
+        </div>
+        <div class="flex flex-wrap gap-1.5 mb-2">${chips}</div>
+        <div class="flex items-center gap-2 mb-3">
+          <span class="text-xs text-slate-400 font-bold shrink-0">Other:</span>
+          <input type="text" placeholder="Describe other funding source&hellip;" value="${escHtml(proj.otherType)}"
+            oninput="state['${dim.id}'].projects[${pi}].otherType=this.value"
+            class="flex-1 border border-slate-200 rounded-lg px-2.5 py-1.5 text-xs focus:outline-none focus:ring-1 text-slate-600">
+        </div>
+        <div class="grid grid-cols-2 gap-3 pt-3 border-t border-dashed" style="border-color:rgba(200,16,46,0.2)">
+          <div>
+            <label class="block text-xs font-bold text-slate-500 uppercase tracking-wider mb-1">Total Funding Amount</label>
+            <div class="relative">
+              <span class="absolute left-2.5 top-1/2 -translate-y-1/2 text-xs font-bold text-slate-400 pointer-events-none">&euro;</span>
+              <input type="text" inputmode="numeric" placeholder="e.g. 250,000"
+                value="${escHtml(proj.fundingTotal)}"
+                oninput="state['${dim.id}'].projects[${pi}].fundingTotal=this.value"
+                class="w-full border border-slate-200 rounded-lg pl-6 pr-3 py-2 text-xs focus:outline-none focus:ring-1 text-slate-700 font-medium">
+            </div>
+            <div class="text-xs text-slate-400 mt-1">Total awarded across all partners</div>
+          </div>
+          <div>
+            <label class="block text-xs font-bold text-slate-500 uppercase tracking-wider mb-1">Direct Income to UPF-BSM</label>
+            <div class="relative">
+              <span class="absolute left-2.5 top-1/2 -translate-y-1/2 text-xs font-bold text-slate-400 pointer-events-none">&euro;</span>
+              <input type="text" inputmode="numeric" placeholder="e.g. 180,000"
+                value="${escHtml(proj.fundingDirect)}"
+                oninput="state['${dim.id}'].projects[${pi}].fundingDirect=this.value; updateScore();"
+                onblur="updateFundingUI('${dim.id}')"
+                class="w-full border border-slate-200 rounded-lg pl-6 pr-3 py-2 text-xs focus:outline-none focus:ring-1 text-slate-700 font-medium">
+            </div>
+            <div class="text-xs text-slate-400 mt-1">Portion allocated directly to UPF-BSM</div>
+          </div>
+        </div>
+      </div>`;
   }).join('');
+
   return `
     <div id="ptypes-${dim.id}" class="mb-3">
-      <div class="text-xs font-black uppercase tracking-wider text-slate-400 mb-2">
-        <svg xmlns="http://www.w3.org/2000/svg" width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" class="inline mb-0.5"><polyline points="22 12 18 12 15 21 9 3 6 12 2 12"/></svg>
-        Funding / Project Type <span class="font-normal normal-case">(select all that apply)</span>
-      </div>
-      <div class="flex flex-wrap gap-1.5 mb-2">${chips}</div>
-      <div class="flex items-center gap-2 mb-3">
-        <span class="text-xs text-slate-400 font-bold shrink-0">Other:</span>
-        <input type="text" placeholder="Describe other funding source…" value="${escHtml(s.otherType)}"
-          oninput="state['${dim.id}'].otherType=this.value"
-          class="flex-1 border border-slate-200 rounded-lg px-2.5 py-1.5 text-xs focus:outline-none focus:ring-1 text-slate-600">
-      </div>
-      <div class="grid grid-cols-2 gap-3 pt-3 border-t border-dashed" style="border-color:rgba(200,16,46,0.2)">
-        <div>
-          <label class="block text-xs font-bold text-slate-500 uppercase tracking-wider mb-1">Total Funding Amount</label>
-          <div class="relative">
-            <span class="absolute left-2.5 top-1/2 -translate-y-1/2 text-xs font-bold text-slate-400 pointer-events-none">€</span>
-            <input type="text" inputmode="numeric" placeholder="e.g. 250,000"
-              value="${escHtml(s.fundingTotal)}"
-              oninput="state['${dim.id}'].fundingTotal=this.value"
-              class="w-full border border-slate-200 rounded-lg pl-6 pr-3 py-2 text-xs focus:outline-none focus:ring-1 text-slate-700 font-medium">
-          </div>
-          <div class="text-xs text-slate-400 mt-1">Total awarded across all partners</div>
-        </div>
-        <div>
-          <label class="block text-xs font-bold text-slate-500 uppercase tracking-wider mb-1">Direct Income to UPF-BSM</label>
-          <div class="relative">
-            <span class="absolute left-2.5 top-1/2 -translate-y-1/2 text-xs font-bold text-slate-400 pointer-events-none">€</span>
-            <input type="text" inputmode="numeric" placeholder="e.g. 180,000"
-              value="${escHtml(s.fundingDirect)}"
-              oninput="state['${dim.id}'].fundingDirect=this.value; updateFundingUI('${dim.id}')"
-              class="w-full border border-slate-200 rounded-lg pl-6 pr-3 py-2 text-xs focus:outline-none focus:ring-1 text-slate-700 font-medium">
-          </div>
-          <div class="text-xs text-slate-400 mt-1">Portion allocated directly to UPF-BSM (incl. overheads, if applicable)</div>
-        </div>
-      </div>
+      ${projectCards}
+      <button onclick="addProject('${dim.id}')"
+        class="w-full text-xs font-black py-2 rounded-xl border-2 border-dashed border-slate-200 text-slate-400 hover:border-red-300 hover:text-red-400 transition-colors mt-1">
+        + Add Another Project
+      </button>
       <div id="funding-triggers-${dim.id}" class="mt-2">${fundingTriggerHTML(dim.id)}</div>
     </div>`;
 }
@@ -644,17 +711,17 @@ function renderCardHTML(dim) {
         <button class="stage-btn flex-1 py-2.5 px-2 rounded-xl border-2 border-slate-200 text-xs font-black uppercase tracking-wider text-slate-400 ${!s.active?'active-s0':''}"
           onclick="setActive('${dim.id}',false)">&#x2715; Not Reported<br><span class="font-normal normal-case tracking-normal text-slate-400">0 pts</span></button>
         <button class="stage-btn flex-1 py-2.5 px-2 rounded-xl border-2 border-slate-200 text-xs font-black uppercase tracking-wider text-emerald-600 ${s.active?'active-s2':''}"
-          onclick="setActive('${dim.id}',true)">&#9711;+&#9733; Mixed Activities<br><span class="font-normal normal-case tracking-normal">S1 (10 pts) + S2 (20 pts) &mdash; max 120</span></button>
+          onclick="setActive('${dim.id}',true)">&#9711;+&#9733; Report Activities<br><span class="font-normal normal-case tracking-normal">S1 (10 pts) &amp; S2 (20 pts) &mdash; max 120</span></button>
       </div>
 
       ${s.active ? `
         <!-- Pivot indicator -->
         <div class="flex items-center gap-2.5 mb-4 rounded-xl px-3 py-2.5" style="background:${hasS2?'rgba(200,16,46,0.06)':'rgba(200,16,46,0.03)'};border:1px solid rgba(200,16,46,${hasS2?'0.25':'0.12'})">
-          <div class="w-5 h-5 rounded-full flex items-center justify-center shrink-0" style="background:${isS2?'#C8102E':'#e5e7eb'}">
-            <svg xmlns="http://www.w3.org/2000/svg" width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="${isS2?'white':'#9ca3af'}" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg>
+          <div class="w-5 h-5 rounded-full flex items-center justify-center shrink-0" style="background:${hasS2?'#C8102E':'#e5e7eb'}">
+            <svg xmlns="http://www.w3.org/2000/svg" width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="${hasS2?'white':'#9ca3af'}" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg>
           </div>
           <div class="flex-1">
-            <div class="text-xs font-black uppercase tracking-wider" style="color:${isS2?'#C8102E':'#9ca3af'}">⚡ Funding Pivot — ${dim.pivot_label}</div>
+            <div class="text-xs font-black uppercase tracking-wider" style="color:${hasS2?'#C8102E':'#9ca3af'}">⚡ Funding Pivot — ${dim.pivot_label}</div>
             <div class="text-xs text-slate-400">${dim.pivot_hint}</div>
           </div>
           ${hasS2?'<span class="text-xs font-black text-white px-2 py-0.5 rounded-full shrink-0" style="background:#C8102E">Active</span>':''}
@@ -689,13 +756,17 @@ function renderCardHTML(dim) {
 // FUNDING MULTIPLIER & TRIGGERS
 // ─────────────────────────────────────────────────────────────────────────────
 function parseFundingAmt(id) {
-  const raw = (state[id].fundingDirect || '').replace(/[^0-9.]/g, '');
-  return parseFloat(raw) || 0;
+  if (!state[id] || !state[id].projects) return 0;
+  return state[id].projects.reduce((sum, p) => {
+    const raw = (p.fundingDirect || '').replace(/[^0-9.]/g, '');
+    return sum + (parseFloat(raw) || 0);
+  }, 0);
 }
 
 function fundingMultiplier(id) {
   if (id !== 'funded' && id !== 'transfer') return 1;
   if (!state[id] || !state[id].active) return 1;
+  if (!hasS2Activity(id)) return 1;        // multiplier only applies when S2 work present
   const amt = parseFundingAmt(id);
   if (amt >= 300000) return 2.0;
   if (amt >=  60000) return 1.5;
@@ -708,6 +779,13 @@ function fundingTriggerHTML(id) {
   if (amt === 0) return '';
   const mult = fundingMultiplier(id);
   const parts = [];
+  const nProjects = (state[id].projects || []).filter(p => {
+    const raw = (p.fundingDirect || '').replace(/[^0-9.]/g, '');
+    return parseFloat(raw) > 0;
+  }).length;
+  if (nProjects > 1) {
+    parts.push(`<span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-bold text-slate-600" style="background:rgba(0,0,0,0.05)">&#931; ${nProjects} projects &middot; &euro;${amt.toLocaleString()} total direct income</span>`);
+  }
   if (mult > 1) {
     const bg = mult >= 2 ? '#C8102E' : mult >= 1.5 ? '#059669' : '#d97706';
     parts.push(`<span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-black text-white" style="background:${bg}">⚡ ×${mult} Score Boost Active</span>`);
@@ -750,16 +828,22 @@ function renderCard(id) {
 function refreshActivities(id) {
   const dim = DIMENSIONS.find(d => d.id === id);
   const s   = state[id];
-  const isS2 = s.stage === 2;
-  const pts  = dimFinalPts(id);
-  const ptsMax = Math.round((isS2 ? MAX_SCORED_S2 * PTS_PER_INSTANCE * S2_MULT : MAX_SCORED_S1 * PTS_PER_INSTANCE) * fundingMultiplier(id));
-  const ptsColor = isS2 ? '#059669' : '#3b82f6';
+  const pts      = dimFinalPts(id);
+  const hasS2    = hasS2Activity(id);
+  const ptsColor = !s.active ? '#94a3b8' : hasS2 ? '#059669' : '#3b82f6';
   const totalInst = dimTotalInstances(id);
-  const scored    = Math.min(totalInst, MAX_SCORED_S1);
+  const fMult    = fundingMultiplier(id);
+  const ptsMax   = Math.round(120 * fMult);
 
   // Activities section
   const actEl = document.getElementById('activities-' + id);
   if (actEl) actEl.innerHTML = activitiesHTML(dim);
+
+  // Project types / funding section (dims 2 & 3 — type chips always shown; funding fields gated by S2)
+  if (dim.projectTypes) {
+    const ptEl = document.getElementById('ptypes-' + id);
+    if (ptEl) ptEl.outerHTML = projectTypesHTML(dim);
+  }
 
   // Pts display
   const ptsEl = document.getElementById('pts-' + id);
@@ -769,32 +853,31 @@ function refreshActivities(id) {
   const subEl = document.getElementById('sub-' + id);
   if (subEl) {
     let sub = 'Not yet reported';
-    if (s.stage === 1) sub = scored < MAX_SCORED_S1
-      ? `Stage 1 · ${totalInst} instance${totalInst!==1?'s':''} · ${dimBasePts(id)} pts (max ${MAX_SCORED_S1 * PTS_PER_INSTANCE})`
-      : `Stage 1 · ${totalInst} instance${totalInst!==1?'s':''} · max reached (${MAX_SCORED_S1 * PTS_PER_INSTANCE} pts)`;
-    if (s.stage === 2) sub = scored < MAX_SCORED_S1
-      ? `Stage 2 · ${totalInst} instance${totalInst!==1?'s':''} · ${pts} pts (max ${ptsMax}${fundingMultiplier(id)>1?' · ×'+fundingMultiplier(id)+' boost':''})`
-      : `Stage 2 · ${totalInst} instance${totalInst!==1?'s':''} · max reached (${ptsMax} pts${fundingMultiplier(id)>1?' · ×'+fundingMultiplier(id)+' boost':''})`;
+    if (s.active) sub = pts >= ptsMax
+      ? `Mixed · ${totalInst} instance${totalInst!==1?'s':''} · max reached (${ptsMax} pts${fMult>1?' · ×'+fMult+' boost':''})`
+      : `Mixed · ${totalInst} instance${totalInst!==1?'s':''} · ${pts} pts (max ${ptsMax}${fMult>1?' · ×'+fMult+' boost':''})`
     subEl.textContent = sub;
   }
 
   // Card border
   const card = document.getElementById('card-' + id);
   if (card) {
-    card.classList.toggle('has-s1', s.stage === 1 && totalInst > 0);
-    card.classList.toggle('has-s2', s.stage === 2 && totalInst > 0);
+    card.classList.toggle('has-s1', s.active && !hasS2 && totalInst > 0);
+    card.classList.toggle('has-s2', s.active && hasS2);
   }
 }
 
-// ─────────────────────────────────────────────────────────────────────────────
-// INTERACTIONS
-// ─────────────────────────────────────────────────────────────────────────────
+
 function setActive(id, active) {
   const s = state[id];
-  s.active      = active;
-  s.s1Counts    = {};
-  s.s2Counts    = {};
-  s.customCount = 0;
+  s.active = active;
+  if (!active) {
+    // Only reset data when deactivating — re-clicking "Report Activities" must NOT wipe counts
+    s.s1Counts    = {};
+    s.s2Counts    = {};
+    s.customCount = 0;
+    s.projects    = [{ types: new Set(), otherType: '', fundingTotal: '', fundingDirect: '' }];
+  }
   renderCard(id);
   updateScore();
 }
@@ -815,15 +898,30 @@ function incCustom(id, delta) {
   updateScore();
 }
 
-function togglePType(dimId, typeId) {
-  const pt = state[dimId].projectTypes;
-  if (pt.has(typeId)) pt.delete(typeId); else pt.add(typeId);
-  // Update just the chip visuals
+function togglePType(dimId, typeId, projIdx) {
+  const proj = state[dimId].projects[projIdx];
+  if (proj.types.has(typeId)) proj.types.delete(typeId); else proj.types.add(typeId);
   const el = document.getElementById('ptypes-' + dimId);
   if (el) {
     const dim = DIMENSIONS.find(d => d.id === dimId);
     el.outerHTML = projectTypesHTML(dim);
   }
+}
+
+function addProject(id) {
+  state[id].projects.push({ types: new Set(), otherType: '', fundingTotal: '', fundingDirect: '' });
+  const el = document.getElementById('ptypes-' + id);
+  if (el) { const dim = DIMENSIONS.find(d => d.id === id); el.outerHTML = projectTypesHTML(dim); }
+  updateScore();
+}
+
+function removeProject(id, idx) {
+  if (state[id].projects.length <= 1) return;
+  state[id].projects.splice(idx, 1);
+  const el = document.getElementById('ptypes-' + id);
+  if (el) { const dim = DIMENSIONS.find(d => d.id === id); el.outerHTML = projectTypesHTML(dim); }
+  updateFundingUI(id);
+  updateScore();
 }
 
 function escHtml(str) {
@@ -903,23 +1001,29 @@ function updatePrintSummary() {
     const s = state[d.id];
     const pts = dimFinalPts(d.id);
     if (!s.active) return `<div class="text-xs text-slate-300 flex justify-between"><span>${d.title}</span><span>Not Reported</span></div>`;
-    const stL = 'Mixed (S1+S2)';
+    const _s1i = Object.values(s.s1Counts).reduce((a,b)=>a+b,0) + s.customCount;
+    const _s2i = Object.values(s.s2Counts).reduce((a,b)=>a+b,0);
+    const stL = _s1i > 0 && _s2i > 0 ? 'Mixed S1+S2' : _s2i > 0 ? 'Stage 2' : 'Stage 1';
     const inst = dimTotalInstances(d.id);
     // Project types for funded/transfer
     let ptLabel = '';
-    if (s.projectTypes && s.projectTypes.size > 0) {
-      const selected = (d.projectTypes||[]).filter(p => s.projectTypes.has(p.id)).map(p=>p.label);
-      if (s.otherType) selected.push('Other: '+s.otherType);
+    if (s.projects) {
+      const allTypes = new Set();
+      const otherTypes = [];
+      s.projects.forEach(p => { p.types.forEach(t => allTypes.add(t)); if (p.otherType) otherTypes.push(p.otherType); });
+      const selected = (d.projectTypes||[]).filter(p => allTypes.has(p.id)).map(p=>p.label);
+      if (otherTypes.length) otherTypes.forEach(t => selected.push('Other: '+t));
       ptLabel = selected.length ? ` · ${selected.join(', ')}` : '';
-    } else if (s.otherType) {
-      ptLabel = ` · Other: ${escHtml(s.otherType)}`;
     }
     let fundingLabel = '';
-    if (s.fundingTotal || s.fundingDirect) {
-      const fp = [];
-      if (s.fundingTotal)  fp.push(`Total: €${escHtml(s.fundingTotal)}`);
-      if (s.fundingDirect) fp.push(`UPF-BSM direct: €${escHtml(s.fundingDirect)}`);
-      fundingLabel = `<span class="text-slate-400 ml-2 font-normal">[${fp.join(' · ')}]</span>`;
+    if (s.projects && s.projects.some(p => p.fundingTotal || p.fundingDirect)) {
+      const fp = s.projects.map((p, pi) => {
+        const parts = [];
+        if (p.fundingTotal)  parts.push(`Total: &euro;${escHtml(p.fundingTotal)}`);
+        if (p.fundingDirect) parts.push(`UPF-BSM: &euro;${escHtml(p.fundingDirect)}`);
+        return parts.length ? `P${pi+1}: ${parts.join(', ')}` : null;
+      }).filter(Boolean);
+      fundingLabel = fp.length ? `<span class="text-slate-400 ml-2 font-normal">[${fp.join(' &middot; ')}]</span>` : '';
     }
     return `<div class="text-xs text-slate-600 flex justify-between border-t border-slate-50 pt-1.5 mt-1.5 gap-4">
       <span class="font-semibold">${d.title}${ptLabel}</span>${fundingLabel}
@@ -939,7 +1043,7 @@ function updatePrintSummary() {
     <div class="flex flex-wrap gap-4 text-center mt-4 pt-4 border-t border-slate-100">
       <div><div class="text-xl font-black text-emerald-600">${actPts}</div><div class="text-xs text-slate-400 uppercase font-bold">Activity Pts</div></div>
       <div><div class="text-xl font-black" style="color:#C8102E">+${holistic}</div><div class="text-xs text-slate-400 uppercase font-bold">Holistic Bonus</div></div>
-      <div class="border-l border-slate-200 pl-4"><div class="text-3xl font-black" style="color:#C8102E">${total}</div><div class="text-xs text-slate-400 uppercase font-bold">Total Score</div></div>
+      <div class="border-l border-slate-200 pl-4"><div class="text-3xl font-black" style="color:#C8102E">${total}<span style="font-size:0.75rem;font-weight:700;color:#94a3b8;margin-left:4px">XP</span></div><div class="text-xs text-slate-400 uppercase font-bold">Total Score</div></div>
       <div class="border-l border-slate-200 pl-4"><div class="text-xl font-black">${stage2Count}/5</div><div class="text-xs text-slate-400 uppercase font-bold">Stage 2 Dims</div></div>
       <div class="border-l border-slate-200 pl-4"><div class="text-sm font-black" style="color:${info.color}">${info.label}</div><div class="text-xs text-slate-400 uppercase font-bold">Career Level</div></div>
     </div>
