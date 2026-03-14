@@ -3,28 +3,36 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
-  <title>SRIM Self-Report Tool — UPF-BSM</title>
+  <meta name="description" content="SRIM Self-Report Tool — UPF-BSM Faculty Research Impact Matrix"/>
+  <meta name="theme-color" content="#C8102E"/>
+  <meta name="mobile-web-app-capable" content="yes"/>
+  <meta name="apple-mobile-web-app-capable" content="yes"/>
+  <title>SRIM Self-Report Tool Lambda — UPF-BSM</title>
   <script src="https://cdn.tailwindcss.com"></script>
   <style>
-    body { font-family: ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Arial, sans-serif; }
-    .stage-btn { transition: all 0.18s ease; cursor: pointer; user-select: none; }
+    body { font-family: ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Arial, sans-serif; -webkit-text-size-adjust: 100%; text-size-adjust: 100%; }
+    .stage-btn { -webkit-transition: all 0.18s ease; transition: all 0.18s ease; cursor: pointer; -webkit-user-select: none; -moz-user-select: none; -ms-user-select: none; user-select: none; }
     .stage-btn.active-s0 { background:#e2e8f0; color:#64748b; border-color:#cbd5e1; }
     .stage-btn.active-s1 { background:#3b82f6; color:white; border-color:#3b82f6; }
     .stage-btn.active-s2 { background:#059669; color:white; border-color:#059669; }
-    .act-row { transition: background 0.12s, opacity 0.12s; }
+    .act-row { -webkit-transition: background 0.12s, opacity 0.12s; transition: background 0.12s, opacity 0.12s; }
     .act-row.active { background: rgba(59,130,246,0.05); }
     .act-row.active-s2 { background: rgba(5,150,105,0.05); }
-    .dim-card { transition: box-shadow 0.2s; }
+    .dim-card { -webkit-transition: box-shadow 0.2s; transition: box-shadow 0.2s; }
     .dim-card.has-s1 { border-left: 4px solid #3b82f6; }
     .dim-card.has-s2 { border-left: 4px solid #059669; }
-    .score-bar { transition: width 0.45s cubic-bezier(.4,0,.2,1); }
+    .score-bar { -webkit-transition: width 0.45s cubic-bezier(.4,0,.2,1); transition: width 0.45s cubic-bezier(.4,0,.2,1); }
+    @-webkit-keyframes pop { 0%{-webkit-transform:scale(1)} 50%{-webkit-transform:scale(1.13)} 100%{-webkit-transform:scale(1)} }
     @keyframes pop { 0%{transform:scale(1)} 50%{transform:scale(1.13)} 100%{transform:scale(1)} }
-    .pop { animation: pop 0.3s ease; }
-    .guide-body { max-height: 0; overflow: hidden; transition: max-height 0.35s ease; }
+    .pop { -webkit-animation: pop 0.3s ease; animation: pop 0.3s ease; }
+    .guide-body { max-height: 0; overflow: hidden; -webkit-transition: max-height 0.35s ease; transition: max-height 0.35s ease; }
     .guide-body.open { max-height: 1200px; }
-    .ptype-chip { display:inline-flex; align-items:center; gap:6px; padding:4px 10px; border-radius:999px; border:1.5px solid #e2e8f0; cursor:pointer; transition:all 0.15s; font-size:11px; font-weight:700; color:#64748b; user-select:none; }
+    .ptype-chip { display:inline-flex; align-items:center; gap:6px; padding:4px 10px; border-radius:999px; border:1.5px solid #e2e8f0; cursor:pointer; -webkit-transition:all 0.15s; transition:all 0.15s; font-size:11px; font-weight:700; color:#64748b; -webkit-user-select:none; -moz-user-select:none; -ms-user-select:none; user-select:none; }
     .ptype-chip:hover { border-color:#C8102E; color:#C8102E; }
     .ptype-chip.selected { background:#C8102E; border-color:#C8102E; color:white; }
+    @media (max-width: 640px) {
+      .guide-body.open { max-height: 2400px; }
+    }
     @media print {
       .no-print { display: none !important; }
       .sticky { position: static !important; }
@@ -49,7 +57,7 @@
     <div class="text-lg font-extrabold text-slate-900">Strategic Research + Impact Matrix <span style="color:#C8102E">2.0</span></div>
     <div class="text-xs text-slate-500 font-medium">Faculty Self-Reporting & Scoring Tool</div>
   </div>
-  <button onclick="window.print()" class="no-print flex items-center gap-2 px-4 py-2 rounded-xl text-sm font-bold border-2 hover:bg-slate-50 transition-colors" style="border-color:#C8102E;color:#C8102E">
+  <button type="button" onclick="window.print()" class="no-print flex items-center gap-2 px-4 py-2 rounded-xl text-sm font-bold border-2 hover:bg-slate-50 transition-colors" style="border-color:#C8102E;color:#C8102E">
     <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="6 9 6 2 18 2 18 9"/><path d="M6 18H4a2 2 0 0 1-2-2v-5a2 2 0 0 1 2-2h16a2 2 0 0 1 2 2v5a2 2 0 0 1-2 2h-2"/><rect x="6" y="14" width="12" height="8"/></svg>
     Print / Export PDF
   </button>
@@ -92,7 +100,7 @@
 
   <!-- ── SCORING GUIDE ── -->
   <div class="bg-white rounded-2xl border border-slate-200 shadow-sm mb-6 overflow-hidden no-print">
-    <button onclick="toggleGuide()" class="w-full flex items-center justify-between p-5 text-left hover:bg-slate-50 transition-colors">
+    <button type="button" onclick="toggleGuide()" class="w-full flex items-center justify-between p-5 text-left hover:bg-slate-50 transition-colors">
       <div class="flex items-center gap-3">
         <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#C8102E" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/></svg>
         <span class="text-sm font-black text-slate-700 uppercase tracking-wider">Scoring Guide & Benchmarks</span>
@@ -189,13 +197,8 @@
       <!-- Score breakdown -->
       <div class="flex items-center gap-4 text-white">
         <div class="text-center">
-          <div class="text-xs font-bold text-slate-500 uppercase tracking-wider">S1 Pts</div>
-          <div id="score-s1" class="text-lg font-black text-blue-400">0</div>
-        </div>
-        <div class="text-slate-600 font-black">+</div>
-        <div class="text-center">
-          <div class="text-xs font-bold text-slate-500 uppercase tracking-wider">S2 Pts</div>
-          <div id="score-s2" class="text-lg font-black text-emerald-400">0</div>
+          <div class="text-xs font-bold text-slate-500 uppercase tracking-wider">Activity Pts</div>
+          <div id="score-s1" class="text-lg font-black text-emerald-400">0</div>
         </div>
         <div class="text-slate-600 font-black">+</div>
         <div class="text-center">
@@ -403,8 +406,9 @@ const BADGE_THRESH = 650;
 const state = {};
 DIMENSIONS.forEach(d => {
   state[d.id] = {
-    stage:          0,
-    actCounts:      {},   // { activityIndex: count }
+    active:         false,
+    s1Counts:       {},   // { activityIndex: count } — Stage 1
+    s2Counts:       {},   // { activityIndex: count } — Stage 2
     customText:     '',
     customCount:    0,
     evidence:       '',
@@ -417,33 +421,40 @@ DIMENSIONS.forEach(d => {
 // ─────────────────────────────────────────────────────────────────────────────
 function dimTotalInstances(id) {
   const s = state[id];
-  const actSum = Object.values(s.actCounts).reduce((a,b) => a+b, 0);
-  return actSum + s.customCount;
+  const s1Sum = Object.values(s.s1Counts).reduce((a,b) => a+b, 0);
+  const s2Sum = Object.values(s.s2Counts).reduce((a,b) => a+b, 0);
+  return s1Sum + s2Sum + s.customCount;
+}
+
+function hasS2Activity(id) {
+  return Object.values(state[id].s2Counts || {}).some(v => v > 0);
 }
 
 function dimBasePts(id) {
-  const maxS = state[id].stage === 2 ? MAX_SCORED_S2 : MAX_SCORED_S1;
-  return Math.min(dimTotalInstances(id), maxS) * PTS_PER_INSTANCE;
+  const s = state[id];
+  if (!s.active) return 0;
+  const s1inst = Object.values(s.s1Counts).reduce((a,b)=>a+b, 0) + s.customCount;
+  const s2inst = Object.values(s.s2Counts).reduce((a,b)=>a+b, 0);
+  const s1pts = Math.min(s1inst * PTS_PER_INSTANCE, 70); // S1 capped at 70 pts per dimension
+  const s2pts = s2inst * PTS_PER_INSTANCE * S2_MULT;
+  return Math.min(s1pts + s2pts, 120); // combined cap remains 120
 }
 
 function dimFinalPts(id) {
-  const base = dimBasePts(id);
-  const stagePts = state[id].stage === 2 ? base * S2_MULT : base;
-  return Math.round(stagePts * fundingMultiplier(id));
+  return Math.round(dimBasePts(id) * fundingMultiplier(id));
 }
 
 function calcScore() {
-  let s1Pts = 0, s2Pts = 0, stage2Count = 0;
+  let actPts = 0, s2DimCount = 0;
   DIMENSIONS.forEach(d => {
-    const stg = state[d.id].stage;
-    const fMult = fundingMultiplier(d.id);
-    if (stg === 1) s1Pts += Math.round(dimBasePts(d.id) * fMult);
-    if (stg === 2) { s2Pts += Math.round(dimBasePts(d.id) * S2_MULT * fMult); stage2Count++; }
+    if (state[d.id].active) {
+      actPts += dimFinalPts(d.id);
+      if (hasS2Activity(d.id)) s2DimCount++;
+    }
   });
-  const subtotal = s1Pts + s2Pts;
-  const holistic = stage2Count >= HOLISTIC_THRESH ? Math.round(subtotal * HOLISTIC_FACTOR) : 0;
-  const total = Math.min(subtotal + holistic, 1000);
-  return { s1Pts, s2Pts, subtotal, holistic, total, stage2Count };
+  const holistic = s2DimCount >= HOLISTIC_THRESH ? Math.round(actPts * HOLISTIC_FACTOR) : 0;
+  const total = Math.min(actPts + holistic, 1000);
+  return { actPts, holistic, total, s2DimCount, stage2Count: s2DimCount };
 }
 
 function careerInfo(total, stage2Count) {
@@ -474,15 +485,14 @@ function iconSVG(pathStr, color, size=20) {
 
 function activityRowHTML(dimId, idx, text, isS2, isCustom) {
   const s = state[dimId];
-  const count = isCustom ? s.customCount : (s.actCounts[idx] || 0);
+  const count = isCustom ? s.customCount : (isS2 ? (s.s2Counts[idx] || 0) : (s.s1Counts[idx] || 0));
   const totalInst = dimTotalInstances(dimId);
-  const scored = Math.min(totalInst, MAX_SCORED_S1);
   const ptsEach = isS2 ? PTS_PER_INSTANCE * S2_MULT : PTS_PER_INSTANCE;
   const c = isS2 ? '#059669' : '#3b82f6';
   const cLight = isS2 ? 'rgba(5,150,105,0.07)' : 'rgba(59,130,246,0.07)';
   const cBorder = isS2 ? 'rgba(5,150,105,0.25)' : 'rgba(59,130,246,0.2)';
-  const incFn = isCustom ? `incCustom('${dimId}',1)` : `incAct('${dimId}',${idx},1)`;
-  const decFn = isCustom ? `incCustom('${dimId}',-1)` : `incAct('${dimId}',${idx},-1)`;
+  const incFn = isCustom ? `incCustom('${dimId}',1)` : `incAct('${dimId}',${idx},1,${isS2})`;
+  const decFn = isCustom ? `incCustom('${dimId}',-1)` : `incAct('${dimId}',${idx},-1,${isS2})`;
 
   const activeStyle = count > 0 ? `background:${cLight};border:1.5px solid ${cBorder};border-radius:10px;` : '';
   const textClass   = count > 0 ? 'text-slate-700 font-semibold' : 'text-slate-400';
@@ -513,51 +523,96 @@ function activityRowHTML(dimId, idx, text, isS2, isCustom) {
 
 function activitiesHTML(dim) {
   const s = state[dim.id];
-  if (s.stage === 0) return '';
-  const isS2 = s.stage === 2;
-  const activities = isS2 ? dim.s2_activities : dim.s1_activities;
-  const stageLabel = isS2 ? dim.s2_label : dim.s1_label;
-  const stageMark  = isS2 ? '★ Stage 2 Activities' : '◎ Stage 1 Activities';
-  const ptsLabel   = isS2 ? `each instance = ${PTS_PER_INSTANCE * S2_MULT} pts (×2)` : `each instance = ${PTS_PER_INSTANCE} pts`;
-  const dimMax     = isS2 ? MAX_SCORED_S2 * PTS_PER_INSTANCE * S2_MULT : MAX_SCORED_S1 * PTS_PER_INSTANCE;
-  const hdrColor   = isS2 ? 'text-emerald-700' : 'text-blue-700';
-  const totalInst  = dimTotalInstances(dim.id);
-  const maxS = isS2 ? MAX_SCORED_S2 : MAX_SCORED_S1;
-  const scored     = Math.min(totalInst, maxS);
-  const overNote   = totalInst > maxS
-    ? `<span class="text-amber-600 font-bold"> · ${totalInst} documented, ${scored} count toward score</span>`
-    : '';
-
-  const rows = activities.map((act, idx) => activityRowHTML(dim.id, idx, act, isS2, false)).join('');
-  const customRow = activityRowHTML(dim.id, 99, '', isS2, true);
-
-  const wrapBg = isS2 ? 'rgba(5,150,105,0.03)' : 'rgba(59,130,246,0.03)';
-  const wrapBorder = isS2 ? 'rgba(5,150,105,0.15)' : 'rgba(59,130,246,0.12)';
-
+  if (!s.active) return '';
+  const s1rows = dim.s1_activities.map((act, idx) => activityRowHTML(dim.id, idx, act, false, false)).join('');
+  const customRow = activityRowHTML(dim.id, 99, '', false, true);
+  const s2rows = dim.s2_activities.map((act, idx) => activityRowHTML(dim.id, idx, act, true, false)).join('');
+  const s1inst = Object.values(s.s1Counts).reduce((a,b)=>a+b, 0) + s.customCount;
+  const s2inst = Object.values(s.s2Counts).reduce((a,b)=>a+b, 0);
+  const s1pts  = Math.min(s1inst * PTS_PER_INSTANCE, 70);
+  const s2pts  = s2inst * PTS_PER_INSTANCE * S2_MULT;
+  const atS1Cap = s1inst * PTS_PER_INSTANCE >= 70;
+  const atCombinedCap = (s1pts + s2pts) >= 120;
   return `
-    <div class="rounded-xl mb-3" style="background:${wrapBg};border:1px solid ${wrapBorder};">
+    <div class="rounded-xl mb-2" style="background:rgba(59,130,246,0.03);border:1px solid rgba(59,130,246,0.12);">
       <div class="px-3 pt-3 pb-1">
         <div class="flex items-baseline justify-between mb-1">
-          <div class="text-xs font-black uppercase tracking-wider ${hdrColor}">${stageMark} — ${stageLabel}</div>
-          <div class="text-xs text-slate-400">${ptsLabel} · max ${MAX_SCORED_S1 * PTS_PER_INSTANCE * (isS2 ? S2_MULT : 1)} pts${overNote}</div>
+          <div class="text-xs font-black uppercase tracking-wider text-blue-700">&#9711; Stage 1 &#8212; ${dim.s1_label}</div>
+          <div class="text-xs text-slate-400">each = ${PTS_PER_INSTANCE} pts</div>
         </div>
-        <div class="text-xs text-slate-400 mb-2">Click <strong>+</strong> to record each instance. You may add the same activity multiple times.</div>
+        <div class="text-xs text-slate-400 mb-2">Click <strong>+</strong> to record each instance. You may log the same activity multiple times.</div>
       </div>
       <div class="px-1 pb-2 space-y-0.5">
-        ${rows}
-        <div class="mt-1 border-t border-dashed pt-1" style="border-color:${isS2 ? 'rgba(5,150,105,0.2)' : 'rgba(59,130,246,0.2)'}">
-          <div class="text-xs font-bold uppercase tracking-wider px-2.5 pb-1" style="color:${isS2 ? '#059669' : '#3b82f6'}; opacity:0.7">+ Additional contribution</div>
+        ${s1rows}
+        <div class="mt-1 border-t border-dashed pt-1" style="border-color:rgba(59,130,246,0.2)">
+          <div class="text-xs font-bold uppercase tracking-wider px-2.5 pb-1" style="color:#3b82f6; opacity:0.7">+ Additional contribution</div>
           ${customRow}
         </div>
       </div>
-    </div>`;
+      ${atS1Cap ? '<div class="text-xs font-black text-blue-700 text-center py-1.5 px-3 mx-2 mb-2 rounded-lg" style="background:rgba(59,130,246,0.08);border:1px solid rgba(59,130,246,0.25)">&#9888; Stage 1 cap reached (70 pts) &mdash; add Stage 2 activities to score higher</div>' : ''}
+    </div>
+    <div class="rounded-xl mb-2" style="background:rgba(5,150,105,0.03);border:1px solid rgba(5,150,105,0.15);">
+      <div class="px-3 pt-3 pb-1">
+        <div class="flex items-baseline justify-between mb-1">
+          <div class="text-xs font-black uppercase tracking-wider text-emerald-700">&#9733; Stage 2 &#8212; ${dim.s2_label}</div>
+          <div class="text-xs text-slate-400">each = ${PTS_PER_INSTANCE * S2_MULT} pts (&#215;2)</div>
+        </div>
+        <div class="text-xs text-slate-400 mb-2">Higher-impact contributions, worth double points.</div>
+      </div>
+      <div class="px-1 pb-2 space-y-0.5">
+        ${s2rows}
+      </div>
+    </div>
+    ${atCombinedCap ? '<div class="text-xs font-black text-amber-700 text-center py-1.5 px-3 rounded-lg mb-2" style="background:rgba(217,119,6,0.08);border:1px solid rgba(217,119,6,0.25)">&#9888; 120 pt cap reached &mdash; additional instances do not add to the score</div>' : ''}`;
 }
 
-function projectTypesHTML(dim) {
-  if (!dim.projectTypes) return '';
-  const s = state[dim.id];
-  if (s.stage === 0) return '';
 
+function projectTypesHTML(dim) {
+  if (!dim.projectTypes) return '';          // Dims 1, 4, 5 — no funding section
+  const s = state[dim.id];
+  if (!s.active) return '';                  // Dimension not yet active
+
+  const hasS2 = hasS2Activity(dim.id);
+
+  // ── S1 only: chips only, multiple projects, no Other field, no funding amounts ─
+  if (!hasS2) {
+    const s1Cards = s.projects.map((proj, pi) => {
+      const chips = dim.projectTypes.map(pt => {
+        const sel = proj.types.has(pt.id);
+        return `<span class="ptype-chip ${sel ? 'selected' : ''}" onclick="togglePType('${dim.id}','${pt.id}',${pi})">${pt.label}</span>`;
+      }).join('');
+      const removeBtn = s.projects.length > 1
+        ? `<button onclick="removeProject('${dim.id}',${pi})"
+             class="text-xs font-bold text-slate-400 hover:text-red-500 transition-colors leading-none">&#x2715; Remove</button>`
+        : '';
+      return `
+        <div class="rounded-xl mb-2 p-3" style="border:1.5px solid rgba(59,130,246,0.18);background:rgba(59,130,246,0.02)">
+          <div class="flex items-center justify-between mb-2">
+            <div class="text-xs font-black uppercase tracking-wider text-blue-600">Project ${pi + 1}</div>
+            ${removeBtn}
+          </div>
+          <div class="text-xs font-black uppercase tracking-wider text-slate-400 mb-1.5">
+            <svg xmlns="http://www.w3.org/2000/svg" width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" class="inline mb-0.5"><polyline points="22 12 18 12 15 21 9 3 6 12 2 12"/></svg>
+            Grant / Project Type <span class="font-normal normal-case">(select all that apply)</span>
+          </div>
+          <div class="flex flex-wrap gap-1.5">${chips}</div>
+        </div>`;
+    }).join('');
+    return `
+      <div id="ptypes-${dim.id}" class="mb-3">
+        ${s1Cards}
+        <button onclick="addProject('${dim.id}')"
+          class="w-full text-xs font-black py-2 rounded-xl border-2 border-dashed border-slate-200 text-slate-400 hover:border-blue-300 hover:text-blue-400 transition-colors mt-1">
+          + Add Another Project
+        </button>
+        <div class="text-xs text-slate-400 text-center py-1.5 mt-2 rounded-lg" style="border:1px dashed rgba(59,130,246,0.2);background:rgba(59,130,246,0.02)">
+          &#9733; Add a Stage 2 activity above to report funding amounts &amp; unlock score multipliers
+        </div>
+        <div id="funding-triggers-${dim.id}"></div>
+      </div>`;
+  }
+
+  // ── S2 present: full project cards with Other + funding amounts ──────────────
   const projectCards = s.projects.map((proj, pi) => {
     const chips = dim.projectTypes.map(pt => {
       const sel = proj.types.has(pt.id);
@@ -604,7 +659,8 @@ function projectTypesHTML(dim) {
               <span class="absolute left-2.5 top-1/2 -translate-y-1/2 text-xs font-bold text-slate-400 pointer-events-none">&euro;</span>
               <input type="text" inputmode="numeric" placeholder="e.g. 180,000"
                 value="${escHtml(proj.fundingDirect)}"
-                oninput="state['${dim.id}'].projects[${pi}].fundingDirect=this.value; updateFundingUI('${dim.id}')"
+                oninput="state['${dim.id}'].projects[${pi}].fundingDirect=this.value; updateScore();"
+                onblur="updateFundingUI('${dim.id}')"
                 class="w-full border border-slate-200 rounded-lg pl-6 pr-3 py-2 text-xs focus:outline-none focus:ring-1 text-slate-700 font-medium">
             </div>
             <div class="text-xs text-slate-400 mt-1">Portion allocated directly to UPF-BSM</div>
@@ -628,21 +684,17 @@ function projectTypesHTML(dim) {
 function renderCardHTML(dim) {
   const s = state[dim.id];
   const pts     = dimFinalPts(dim.id);
-  const isS2    = s.stage === 2;
+  const hasS2   = hasS2Activity(dim.id);
   const fMult   = fundingMultiplier(dim.id);
-  const ptsMax  = Math.round((isS2 ? MAX_SCORED_S2 * PTS_PER_INSTANCE * S2_MULT : MAX_SCORED_S1 * PTS_PER_INSTANCE) * fMult);
-  const ptsColor= s.stage === 0 ? '#94a3b8' : isS2 ? '#059669' : '#3b82f6';
-  const borderCls = s.stage === 1 && dimTotalInstances(dim.id) > 0 ? 'has-s1'
-                  : s.stage === 2 && dimTotalInstances(dim.id) > 0 ? 'has-s2' : '';
+  const ptsMax  = Math.round(120 * fMult);
+  const ptsColor= !s.active ? '#94a3b8' : hasS2 ? '#059669' : '#3b82f6';
+  const borderCls = s.active && !hasS2 && dimTotalInstances(dim.id) > 0 ? 'has-s1'
+                  : s.active &&  hasS2 ? 'has-s2' : '';
   const totalInst = dimTotalInstances(dim.id);
-  const scored    = Math.min(totalInst, MAX_SCORED_S1);
   let subtitle = 'Not yet reported';
-  if (s.stage === 1) subtitle = scored < MAX_SCORED_S1
-    ? `Stage 1 · ${totalInst} instance${totalInst!==1?'s':''} · ${dimBasePts(dim.id)} pts (max ${MAX_SCORED_S1 * PTS_PER_INSTANCE})`
-    : `Stage 1 · ${totalInst} instance${totalInst!==1?'s':''} · max reached (${MAX_SCORED_S1 * PTS_PER_INSTANCE} pts)`;
-  if (s.stage === 2) subtitle = scored < MAX_SCORED_S1
-    ? `Stage 2 · ${totalInst} instance${totalInst!==1?'s':''} · ${pts} pts (max ${ptsMax})`
-    : `Stage 2 · ${totalInst} instance${totalInst!==1?'s':''} · max reached (${ptsMax} pts)`;
+  if (s.active) subtitle = pts >= ptsMax
+    ? `Mixed · ${totalInst} instance${totalInst!==1?'s':''} · max reached (${ptsMax} pts)`
+    : `Mixed · ${totalInst} instance${totalInst!==1?'s':''} · ${pts} pts (max ${ptsMax})`;
 
   return `
   <div class="dim-card bg-white rounded-2xl border border-slate-200 shadow-sm overflow-hidden ${borderCls}" id="card-${dim.id}">
@@ -664,25 +716,23 @@ function renderCardHTML(dim) {
     <div class="p-5">
       <!-- Stage selector -->
       <div class="flex gap-2 mb-4 no-print">
-        <button class="stage-btn flex-1 py-2.5 px-2 rounded-xl border-2 border-slate-200 text-xs font-black uppercase tracking-wider text-slate-400 ${s.stage===0?'active-s0':''}"
-          onclick="setStage('${dim.id}',0)">✕ Not Reported<br><span class="font-normal normal-case tracking-normal text-slate-400">0 pts</span></button>
-        <button class="stage-btn flex-1 py-2.5 px-2 rounded-xl border-2 border-slate-200 text-xs font-black uppercase tracking-wider text-blue-500 ${s.stage===1?'active-s1':''}"
-          onclick="setStage('${dim.id}',1)">◎ Stage 1<br><span class="font-normal normal-case tracking-normal">up to 70 pts</span></button>
-        <button class="stage-btn flex-1 py-2.5 px-2 rounded-xl border-2 border-slate-200 text-xs font-black uppercase tracking-wider text-emerald-600 ${s.stage===2?'active-s2':''}"
-          onclick="setStage('${dim.id}',2)">★ Stage 2<br><span class="font-normal normal-case tracking-normal">up to 120 pts (×2)</span></button>
+        <button class="stage-btn flex-1 py-2.5 px-2 rounded-xl border-2 border-slate-200 text-xs font-black uppercase tracking-wider text-slate-400 ${!s.active?'active-s0':''}"
+          onclick="setActive('${dim.id}',false)">&#x2715; Not Reported<br><span class="font-normal normal-case tracking-normal text-slate-400">0 pts</span></button>
+        <button class="stage-btn flex-1 py-2.5 px-2 rounded-xl border-2 border-slate-200 text-xs font-black uppercase tracking-wider text-emerald-600 ${s.active?'active-s2':''}"
+          onclick="setActive('${dim.id}',true)">&#9711;+&#9733; Report Activities<br><span class="font-normal normal-case tracking-normal">S1 (10 pts) &amp; S2 (20 pts) &mdash; max 120</span></button>
       </div>
 
-      ${s.stage > 0 ? `
+      ${s.active ? `
         <!-- Pivot indicator -->
-        <div class="flex items-center gap-2.5 mb-4 rounded-xl px-3 py-2.5" style="background:${isS2?'rgba(200,16,46,0.06)':'rgba(200,16,46,0.03)'};border:1px solid rgba(200,16,46,${isS2?'0.25':'0.12'})">
-          <div class="w-5 h-5 rounded-full flex items-center justify-center shrink-0" style="background:${isS2?'#C8102E':'#e5e7eb'}">
-            <svg xmlns="http://www.w3.org/2000/svg" width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="${isS2?'white':'#9ca3af'}" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg>
+        <div class="flex items-center gap-2.5 mb-4 rounded-xl px-3 py-2.5" style="background:${hasS2?'rgba(200,16,46,0.06)':'rgba(200,16,46,0.03)'};border:1px solid rgba(200,16,46,${hasS2?'0.25':'0.12'})">
+          <div class="w-5 h-5 rounded-full flex items-center justify-center shrink-0" style="background:${hasS2?'#C8102E':'#e5e7eb'}">
+            <svg xmlns="http://www.w3.org/2000/svg" width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="${hasS2?'white':'#9ca3af'}" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg>
           </div>
           <div class="flex-1">
-            <div class="text-xs font-black uppercase tracking-wider" style="color:${isS2?'#C8102E':'#9ca3af'}">⚡ Funding Pivot — ${dim.pivot_label}</div>
+            <div class="text-xs font-black uppercase tracking-wider" style="color:${hasS2?'#C8102E':'#9ca3af'}">⚡ Funding Pivot — ${dim.pivot_label}</div>
             <div class="text-xs text-slate-400">${dim.pivot_hint}</div>
           </div>
-          ${isS2?'<span class="text-xs font-black text-white px-2 py-0.5 rounded-full shrink-0" style="background:#C8102E">Active</span>':''}
+          ${hasS2?'<span class="text-xs font-black text-white px-2 py-0.5 rounded-full shrink-0" style="background:#C8102E">Active</span>':''}
         </div>
 
         <!-- Project types (dims 2 & 3) -->
@@ -702,7 +752,7 @@ function renderCardHTML(dim) {
         </div>
       ` : `
         <div class="text-center py-6 text-slate-300">
-          <div class="text-xs font-bold uppercase tracking-wider">Select a stage above to begin reporting</div>
+          <div class="text-xs font-bold uppercase tracking-wider">Click the button above to begin reporting</div>
         </div>
       `}
     </div>
@@ -723,7 +773,8 @@ function parseFundingAmt(id) {
 
 function fundingMultiplier(id) {
   if (id !== 'funded' && id !== 'transfer') return 1;
-  if (!state[id] || state[id].stage === 0) return 1;
+  if (!state[id] || !state[id].active) return 1;
+  if (!hasS2Activity(id)) return 1;        // multiplier only applies when S2 work present
   const amt = parseFundingAmt(id);
   if (amt >= 300000) return 2.0;
   if (amt >=  60000) return 1.5;
@@ -785,16 +836,22 @@ function renderCard(id) {
 function refreshActivities(id) {
   const dim = DIMENSIONS.find(d => d.id === id);
   const s   = state[id];
-  const isS2 = s.stage === 2;
-  const pts  = dimFinalPts(id);
-  const ptsMax = Math.round((isS2 ? MAX_SCORED_S2 * PTS_PER_INSTANCE * S2_MULT : MAX_SCORED_S1 * PTS_PER_INSTANCE) * fundingMultiplier(id));
-  const ptsColor = isS2 ? '#059669' : '#3b82f6';
+  const pts      = dimFinalPts(id);
+  const hasS2    = hasS2Activity(id);
+  const ptsColor = !s.active ? '#94a3b8' : hasS2 ? '#059669' : '#3b82f6';
   const totalInst = dimTotalInstances(id);
-  const scored    = Math.min(totalInst, MAX_SCORED_S1);
+  const fMult    = fundingMultiplier(id);
+  const ptsMax   = Math.round(120 * fMult);
 
   // Activities section
   const actEl = document.getElementById('activities-' + id);
   if (actEl) actEl.innerHTML = activitiesHTML(dim);
+
+  // Project types / funding section (dims 2 & 3 — type chips always shown; funding fields gated by S2)
+  if (dim.projectTypes) {
+    const ptEl = document.getElementById('ptypes-' + id);
+    if (ptEl) ptEl.outerHTML = projectTypesHTML(dim);
+  }
 
   // Pts display
   const ptsEl = document.getElementById('pts-' + id);
@@ -804,41 +861,41 @@ function refreshActivities(id) {
   const subEl = document.getElementById('sub-' + id);
   if (subEl) {
     let sub = 'Not yet reported';
-    if (s.stage === 1) sub = scored < MAX_SCORED_S1
-      ? `Stage 1 · ${totalInst} instance${totalInst!==1?'s':''} · ${dimBasePts(id)} pts (max ${MAX_SCORED_S1 * PTS_PER_INSTANCE})`
-      : `Stage 1 · ${totalInst} instance${totalInst!==1?'s':''} · max reached (${MAX_SCORED_S1 * PTS_PER_INSTANCE} pts)`;
-    if (s.stage === 2) sub = scored < MAX_SCORED_S1
-      ? `Stage 2 · ${totalInst} instance${totalInst!==1?'s':''} · ${pts} pts (max ${ptsMax}${fundingMultiplier(id)>1?' · ×'+fundingMultiplier(id)+' boost':''})`
-      : `Stage 2 · ${totalInst} instance${totalInst!==1?'s':''} · max reached (${ptsMax} pts${fundingMultiplier(id)>1?' · ×'+fundingMultiplier(id)+' boost':''})`;
+    if (s.active) sub = pts >= ptsMax
+      ? `Mixed · ${totalInst} instance${totalInst!==1?'s':''} · max reached (${ptsMax} pts${fMult>1?' · ×'+fMult+' boost':''})`
+      : `Mixed · ${totalInst} instance${totalInst!==1?'s':''} · ${pts} pts (max ${ptsMax}${fMult>1?' · ×'+fMult+' boost':''})`
     subEl.textContent = sub;
   }
 
   // Card border
   const card = document.getElementById('card-' + id);
   if (card) {
-    card.classList.toggle('has-s1', s.stage === 1 && totalInst > 0);
-    card.classList.toggle('has-s2', s.stage === 2 && totalInst > 0);
+    card.classList.toggle('has-s1', s.active && !hasS2 && totalInst > 0);
+    card.classList.toggle('has-s2', s.active && hasS2);
   }
 }
 
-// ─────────────────────────────────────────────────────────────────────────────
-// INTERACTIONS
-// ─────────────────────────────────────────────────────────────────────────────
-function setStage(id, stage) {
+
+function setActive(id, active) {
   const s = state[id];
-  s.stage       = stage;
-  s.actCounts   = {};
-  s.customCount = 0;
-  if (stage === 0) s.projects = [{ types: new Set(), otherType: '', fundingTotal: '', fundingDirect: '' }];
+  s.active = active;
+  if (!active) {
+    // Only reset data when deactivating — re-clicking "Report Activities" must NOT wipe counts
+    s.s1Counts    = {};
+    s.s2Counts    = {};
+    s.customCount = 0;
+    s.projects    = [{ types: new Set(), otherType: '', fundingTotal: '', fundingDirect: '' }];
+  }
   renderCard(id);
   updateScore();
 }
 
-function incAct(id, idx, delta) {
+function incAct(id, idx, delta, isS2) {
   const s = state[id];
-  const current = s.actCounts[idx] || 0;
+  const counts = isS2 ? s.s2Counts : s.s1Counts;
+  const current = counts[idx] || 0;
   const newVal  = Math.max(0, current + delta);
-  if (newVal === 0) delete s.actCounts[idx]; else s.actCounts[idx] = newVal;
+  if (newVal === 0) delete counts[idx]; else counts[idx] = newVal;
   refreshActivities(id);
   updateScore();
 }
@@ -900,9 +957,10 @@ function animCount(elId, target) {
 }
 
 function updateScore() {
-  const { s1Pts, s2Pts, holistic, total, stage2Count } = calcScore();
+  const { actPts, holistic, total, s2DimCount } = calcScore();
+  const stage2Count = s2DimCount;
 
-  // S2 dots
+  // S2 dots (dims with Stage 2 activity)
   const dotsEl = document.getElementById('stage2-dots');
   if (dotsEl) dotsEl.innerHTML = [0,1,2,3,4].map(i => {
     const on = i < stage2Count;
@@ -918,8 +976,7 @@ function updateScore() {
     } else hBadge.classList.add('hidden');
   }
 
-  animCount('score-s1', s1Pts);
-  animCount('score-s2', s2Pts);
+  animCount('score-s1', actPts);
   animCount('score-holistic', holistic);
   animCount('score-total', total);
 
@@ -939,19 +996,22 @@ function updateScore() {
 // PRINT SUMMARY
 // ─────────────────────────────────────────────────────────────────────────────
 function updatePrintSummary() {
-  const { s1Pts, s2Pts, holistic, total, stage2Count } = calcScore();
-  const name = document.getElementById('faculty-name')?.value || '—';
-  const dept = document.getElementById('faculty-dept')?.value || '—';
-  const pos  = document.getElementById('faculty-position')?.value || '—';
-  const year = document.getElementById('faculty-year')?.value || '—';
+  const { actPts, holistic, total, s2DimCount } = calcScore();
+  const stage2Count = s2DimCount;
+  const _en = document.getElementById('faculty-name'); const name = (_en && _en.value) ? _en.value : '—';
+  const _ed = document.getElementById('faculty-dept'); const dept = (_ed && _ed.value) ? _ed.value : '—';
+  const _ep = document.getElementById('faculty-position'); const pos  = (_ep && _ep.value) ? _ep.value : '—';
+  const _ey = document.getElementById('faculty-year'); const year = (_ey && _ey.value) ? _ey.value : '—';
   const info = careerInfo(total, stage2Count);
   const posLabel = pos==='junior'?'Junior Faculty':pos==='senior'?'Senior Faculty':pos;
 
   const dimRows = DIMENSIONS.map(d => {
     const s = state[d.id];
     const pts = dimFinalPts(d.id);
-    if (s.stage === 0) return `<div class="text-xs text-slate-300 flex justify-between"><span>${d.title}</span><span>Not Reported</span></div>`;
-    const stL = s.stage===1?'Stage 1':'Stage 2 (×2)';
+    if (!s.active) return `<div class="text-xs text-slate-300 flex justify-between"><span>${d.title}</span><span>Not Reported</span></div>`;
+    const _s1i = Object.values(s.s1Counts).reduce((a,b)=>a+b,0) + s.customCount;
+    const _s2i = Object.values(s.s2Counts).reduce((a,b)=>a+b,0);
+    const stL = _s1i > 0 && _s2i > 0 ? 'Mixed S1+S2' : _s2i > 0 ? 'Stage 2' : 'Stage 1';
     const inst = dimTotalInstances(d.id);
     // Project types for funded/transfer
     let ptLabel = '';
@@ -989,8 +1049,7 @@ function updatePrintSummary() {
       <div><span class="text-slate-400">Position:</span> <strong>${posLabel}</strong></div>
     </div>
     <div class="flex flex-wrap gap-4 text-center mt-4 pt-4 border-t border-slate-100">
-      <div><div class="text-xl font-black text-blue-500">${s1Pts}</div><div class="text-xs text-slate-400 uppercase font-bold">Stage 1 Pts</div></div>
-      <div><div class="text-xl font-black text-emerald-600">+${s2Pts}</div><div class="text-xs text-slate-400 uppercase font-bold">Stage 2 Pts</div></div>
+      <div><div class="text-xl font-black text-emerald-600">${actPts}</div><div class="text-xs text-slate-400 uppercase font-bold">Activity Pts</div></div>
       <div><div class="text-xl font-black" style="color:#C8102E">+${holistic}</div><div class="text-xs text-slate-400 uppercase font-bold">Holistic Bonus</div></div>
       <div class="border-l border-slate-200 pl-4"><div class="text-3xl font-black" style="color:#C8102E">${total}<span style="font-size:0.75rem;font-weight:700;color:#94a3b8;margin-left:4px">XP</span></div><div class="text-xs text-slate-400 uppercase font-bold">Total Score</div></div>
       <div class="border-l border-slate-200 pl-4"><div class="text-xl font-black">${stage2Count}/5</div><div class="text-xs text-slate-400 uppercase font-bold">Stage 2 Dims</div></div>
