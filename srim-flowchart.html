@@ -476,6 +476,8 @@
     .diamond-branches { flex-direction: column; }
   }
 
+    
+  
     /* ── Tool nav toggle ── */
     .tool-nav {
       position: sticky;
@@ -516,11 +518,12 @@
 </head>
 <body>
 <!-- ── TOOL NAV TOGGLE ── -->
-<nav class="tool-nav" role="navigation" aria-label="Tool navigation" style="position:sticky;top:0;z-index:40;background:#fff;border-bottom:1.5px solid #e2e8f0;box-shadow:0 1px 6px rgba(0,0,0,.06);">
-  <div style="max-width:72rem;margin:0 auto;padding:0 1.5rem;display:flex;gap:4px;align-items:center;height:44px;">
+<nav class="tool-nav no-print" role="navigation" aria-label="Tool navigation">
+  <div class="tool-nav-inner">
     <a href="index.html" class="nav-btn">Excellence Matrix</a>
-      <a href="srim-reporting-tool.html" class="nav-btn">SRIM Self-Report</a>
-      <a href="srim-flowchart.html" class="nav-btn nav-btn-active" aria-current="page">Flowchart</a>
+    <a href="srim-reporting-tool.html" class="nav-btn">SRIM Self-Report</a>
+    <a href="srim-flowchart.html" class="nav-btn nav-btn-active" aria-current="page">Flowchart</a>
+    <a href="architecture.html" class="nav-btn">Architecture</a>
   </div>
 </nav>
 
