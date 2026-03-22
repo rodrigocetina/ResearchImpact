@@ -1,0 +1,1234 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>SRIM System Flowchart — UPF-BSM</title>
+<style>
+  @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&display=swap');
+
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+
+  body {
+    font-family: 'Inter', sans-serif;
+    background: #f0f4f8;
+    color: #1e293b;
+    min-height: 100vh;
+    padding: 40px 24px 80px;
+  }
+
+  /* ─── PAGE HEADER ─── */
+  .page-header {
+    text-align: center;
+    margin-bottom: 52px;
+  }
+  .page-header .eyebrow {
+    font-size: 11px;
+    font-weight: 800;
+    letter-spacing: 0.18em;
+    text-transform: uppercase;
+    color: #C8102E;
+    margin-bottom: 10px;
+  }
+  .page-header h1 {
+    font-size: 30px;
+    font-weight: 900;
+    color: #0f172a;
+    line-height: 1.2;
+    margin-bottom: 10px;
+  }
+  .page-header p {
+    font-size: 14px;
+    color: #64748b;
+    max-width: 600px;
+    margin: 0 auto;
+    line-height: 1.6;
+  }
+
+  /* ─── FLOW CANVAS ─── */
+  .flow-canvas {
+    max-width: 1100px;
+    margin: 0 auto;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 0;
+  }
+
+  /* ─── PHASE LABELS ─── */
+  .phase-label {
+    font-size: 10px;
+    font-weight: 800;
+    letter-spacing: 0.16em;
+    text-transform: uppercase;
+    padding: 4px 12px;
+    border-radius: 999px;
+    margin-bottom: 12px;
+    align-self: flex-start;
+    margin-left: 0;
+  }
+  .phase-input  { background: #dbeafe; color: #1d4ed8; }
+  .phase-score  { background: #d1fae5; color: #065f46; }
+  .phase-agg    { background: #fef3c7; color: #92400e; }
+  .phase-school { background: #fce7f3; color: #9d174d; }
+
+  /* ─── ARROW connector ─── */
+  .arrow {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    margin: 2px 0;
+  }
+  .arrow-line {
+    width: 2px;
+    height: 28px;
+    background: linear-gradient(to bottom, #94a3b8, #64748b);
+  }
+  .arrow-head {
+    width: 0;
+    height: 0;
+    border-left: 7px solid transparent;
+    border-right: 7px solid transparent;
+    border-top: 10px solid #64748b;
+  }
+  .arrow-label {
+    font-size: 10px;
+    font-weight: 700;
+    color: #94a3b8;
+    letter-spacing: 0.06em;
+    text-transform: uppercase;
+    margin-bottom: 3px;
+  }
+
+  /* ─── NODES ─── */
+  .node {
+    border-radius: 16px;
+    padding: 18px 24px;
+    width: 100%;
+    max-width: 740px;
+    position: relative;
+  }
+
+  /* START node */
+  .node-start {
+    background: linear-gradient(135deg, #1e3a5f 0%, #0f172a 100%);
+    color: white;
+    text-align: center;
+    border-radius: 999px;
+    padding: 16px 40px;
+    max-width: 340px;
+    box-shadow: 0 4px 20px rgba(15,23,42,0.25);
+  }
+  .node-start .label { font-size: 13px; font-weight: 800; letter-spacing: 0.04em; }
+  .node-start .sub   { font-size: 11px; color: #94a3b8; margin-top: 2px; }
+
+  /* END node */
+  .node-end {
+    background: linear-gradient(135deg, #C8102E 0%, #7f1d1d 100%);
+    color: white;
+    text-align: center;
+    border-radius: 999px;
+    padding: 16px 40px;
+    max-width: 400px;
+    box-shadow: 0 4px 20px rgba(200,16,46,0.3);
+  }
+  .node-end .label { font-size: 13px; font-weight: 800; letter-spacing: 0.04em; }
+  .node-end .sub   { font-size: 11px; color: #fca5a5; margin-top: 2px; }
+
+  /* PROCESS node */
+  .node-process {
+    background: white;
+    border: 1.5px solid #e2e8f0;
+    box-shadow: 0 2px 12px rgba(0,0,0,0.06);
+  }
+  .node-process .node-title {
+    font-size: 13px;
+    font-weight: 800;
+    color: #0f172a;
+    margin-bottom: 4px;
+  }
+  .node-process .node-desc {
+    font-size: 12px;
+    color: #64748b;
+    line-height: 1.5;
+  }
+
+  /* DECISION diamond */
+  .diamond-wrap {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 100%;
+    max-width: 740px;
+  }
+  .diamond {
+    position: relative;
+    width: 220px;
+    height: 80px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    flex-shrink: 0;
+  }
+  .diamond::before {
+    content: '';
+    position: absolute;
+    inset: 0;
+    background: #fffbeb;
+    border: 2px solid #f59e0b;
+    transform: rotate(45deg) scale(0.72);
+    border-radius: 6px;
+  }
+  .diamond .diamond-text {
+    position: relative;
+    font-size: 11px;
+    font-weight: 800;
+    color: #92400e;
+    text-align: center;
+    line-height: 1.3;
+    z-index: 1;
+    padding: 0 8px;
+  }
+  .diamond-branches {
+    display: flex;
+    gap: 24px;
+    align-items: stretch;
+    width: 100%;
+    max-width: 740px;
+    margin-top: 0;
+  }
+  .diamond-branch {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 0;
+  }
+  .branch-label {
+    font-size: 10px;
+    font-weight: 800;
+    text-transform: uppercase;
+    letter-spacing: 0.1em;
+    padding: 3px 10px;
+    border-radius: 999px;
+    margin-bottom: 8px;
+  }
+  .branch-yes { background: #d1fae5; color: #065f46; }
+  .branch-no  { background: #fee2e2; color: #991b1b; }
+
+  .branch-node {
+    background: white;
+    border-radius: 12px;
+    padding: 12px 16px;
+    font-size: 11.5px;
+    font-weight: 600;
+    color: #1e293b;
+    border: 1.5px solid #e2e8f0;
+    text-align: center;
+    line-height: 1.45;
+    width: 100%;
+    box-shadow: 0 1px 6px rgba(0,0,0,0.05);
+  }
+
+  /* WIDE card for the 5 dimensions */
+  .dimensions-card {
+    background: white;
+    border: 1.5px solid #e2e8f0;
+    border-radius: 16px;
+    padding: 20px 24px;
+    width: 100%;
+    max-width: 740px;
+    box-shadow: 0 2px 12px rgba(0,0,0,0.06);
+  }
+  .dimensions-card .card-title {
+    font-size: 11px;
+    font-weight: 800;
+    letter-spacing: 0.14em;
+    text-transform: uppercase;
+    color: #94a3b8;
+    margin-bottom: 14px;
+  }
+  .dim-grid {
+    display: grid;
+    grid-template-columns: repeat(5, 1fr);
+    gap: 10px;
+  }
+  .dim-pill {
+    border-radius: 10px;
+    padding: 10px 8px;
+    text-align: center;
+    font-size: 10.5px;
+    font-weight: 700;
+    line-height: 1.35;
+    border: 1.5px solid;
+  }
+  .dim-1 { background: #eff6ff; border-color: #bfdbfe; color: #1d4ed8; }
+  .dim-2 { background: #f0fdf4; border-color: #bbf7d0; color: #15803d; }
+  .dim-3 { background: #fff7ed; border-color: #fed7aa; color: #c2410c; }
+  .dim-4 { background: #fdf4ff; border-color: #e9d5ff; color: #7e22ce; }
+  .dim-5 { background: #fef2f2; border-color: #fecaca; color: #b91c1c; }
+  .dim-pill .dim-num {
+    display: block;
+    font-size: 9px;
+    opacity: 0.7;
+    margin-bottom: 3px;
+  }
+
+  /* SCORING breakdown card */
+  .scoring-card {
+    background: white;
+    border: 1.5px solid #e2e8f0;
+    border-radius: 16px;
+    padding: 20px 24px;
+    width: 100%;
+    max-width: 740px;
+    box-shadow: 0 2px 12px rgba(0,0,0,0.06);
+  }
+  .scoring-rows {
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+  }
+  .scoring-row {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    padding: 10px 14px;
+    border-radius: 10px;
+  }
+  .sr-s1  { background: #eff6ff; }
+  .sr-s2  { background: #f0fdf4; }
+  .sr-mult{ background: #fff7ed; }
+  .sr-hol { background: #fef3c7; }
+  .sr-cap { background: #f8fafc; border: 1px dashed #cbd5e1; }
+  .scoring-row .sr-badge {
+    font-size: 9px;
+    font-weight: 800;
+    letter-spacing: 0.1em;
+    text-transform: uppercase;
+    padding: 3px 8px;
+    border-radius: 999px;
+    white-space: nowrap;
+    flex-shrink: 0;
+  }
+  .sr-s1 .sr-badge   { background: #dbeafe; color: #1d4ed8; }
+  .sr-s2 .sr-badge   { background: #d1fae5; color: #065f46; }
+  .sr-mult .sr-badge { background: #fed7aa; color: #c2410c; }
+  .sr-hol .sr-badge  { background: #fde68a; color: #92400e; }
+  .sr-cap .sr-badge  { background: #e2e8f0; color: #475569; }
+  .scoring-row .sr-text {
+    font-size: 11.5px;
+    color: #334155;
+    font-weight: 500;
+    flex: 1;
+    line-height: 1.4;
+  }
+  .scoring-row .sr-pts {
+    font-size: 13px;
+    font-weight: 900;
+    white-space: nowrap;
+  }
+  .sr-s1 .sr-pts  { color: #1d4ed8; }
+  .sr-s2 .sr-pts  { color: #15803d; }
+  .sr-mult .sr-pts{ color: #c2410c; }
+  .sr-hol .sr-pts { color: #92400e; }
+  .sr-cap .sr-pts { color: #475569; }
+
+  /* BENCHMARK card */
+  .benchmark-card {
+    background: white;
+    border: 1.5px solid #e2e8f0;
+    border-radius: 16px;
+    padding: 20px 24px;
+    width: 100%;
+    max-width: 740px;
+    box-shadow: 0 2px 12px rgba(0,0,0,0.06);
+  }
+  .bench-grid {
+    display: grid;
+    grid-template-columns: repeat(4, 1fr);
+    gap: 10px;
+    margin-top: 12px;
+  }
+  .bench-box {
+    border-radius: 10px;
+    padding: 12px;
+    text-align: center;
+  }
+  .bench-junior   { background: #f0f9ff; border: 1.5px solid #bae6fd; }
+  .bench-senior   { background: #f0fdf4; border: 1.5px solid #bbf7d0; }
+  .bench-badge    { background: #fefce8; border: 1.5px solid #fde68a; }
+  .bench-max      { background: linear-gradient(135deg, #fff1f2, #fce7f3); border: 1.5px solid #fecdd3; }
+  .bench-box .b-range { font-size: 14px; font-weight: 900; color: #0f172a; margin-bottom: 3px; }
+  .bench-box .b-label { font-size: 10px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.08em; color: #64748b; margin-bottom: 6px; }
+  .bench-box .b-note  { font-size: 10px; color: #94a3b8; line-height: 1.4; }
+
+  /* AGGREGATION section */
+  .agg-card {
+    background: white;
+    border: 1.5px solid #e2e8f0;
+    border-radius: 16px;
+    padding: 20px 24px;
+    width: 100%;
+    max-width: 900px;
+    box-shadow: 0 2px 12px rgba(0,0,0,0.06);
+  }
+  .agg-grid {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 12px;
+    margin-top: 14px;
+  }
+  .agg-box {
+    border-radius: 12px;
+    padding: 14px 12px;
+    text-align: center;
+  }
+  .agg-dept    { background: #eff6ff; border: 1.5px solid #bfdbfe; }
+  .agg-cohort  { background: #f0fdf4; border: 1.5px solid #bbf7d0; }
+  .agg-school  { background: linear-gradient(135deg, #fff1f2 0%, #fce7f3 100%); border: 1.5px solid #fda4af; }
+  .agg-box .ag-icon  { font-size: 22px; margin-bottom: 6px; }
+  .agg-box .ag-title { font-size: 12px; font-weight: 800; color: #0f172a; margin-bottom: 4px; }
+  .agg-box .ag-desc  { font-size: 11px; color: #64748b; line-height: 1.45; }
+
+  /* USES card */
+  .uses-card {
+    background: white;
+    border: 1.5px solid #e2e8f0;
+    border-radius: 16px;
+    padding: 20px 24px;
+    width: 100%;
+    max-width: 900px;
+    box-shadow: 0 2px 12px rgba(0,0,0,0.06);
+  }
+  .uses-grid {
+    display: grid;
+    grid-template-columns: repeat(4, 1fr);
+    gap: 10px;
+    margin-top: 14px;
+  }
+  .use-box {
+    background: #f8fafc;
+    border: 1.5px solid #e2e8f0;
+    border-radius: 10px;
+    padding: 12px;
+    text-align: center;
+  }
+  .use-box .u-icon  { font-size: 20px; margin-bottom: 5px; }
+  .use-box .u-label { font-size: 11px; font-weight: 700; color: #1e293b; }
+  .use-box .u-sub   { font-size: 10px; color: #94a3b8; margin-top: 3px; line-height: 1.35; }
+
+  /* Section titles */
+  .section-title {
+    font-size: 11px;
+    font-weight: 800;
+    letter-spacing: 0.14em;
+    text-transform: uppercase;
+    color: #94a3b8;
+    margin-bottom: 0;
+    align-self: flex-start;
+    width: 100%;
+    max-width: 900px;
+  }
+
+  /* LEGEND */
+  .legend {
+    display: flex;
+    gap: 20px;
+    flex-wrap: wrap;
+    justify-content: center;
+    margin-bottom: 36px;
+  }
+  .legend-item {
+    display: flex;
+    align-items: center;
+    gap: 7px;
+    font-size: 11px;
+    color: #475569;
+    font-weight: 500;
+  }
+  .legend-dot {
+    width: 12px;
+    height: 12px;
+    border-radius: 3px;
+    flex-shrink: 0;
+  }
+
+  /* Wide layout tweaks */
+  .wide { max-width: 900px; }
+
+  /* Connector with side label */
+  .arrow-split {
+    display: flex;
+    align-items: flex-start;
+    justify-content: center;
+    width: 100%;
+    max-width: 740px;
+    gap: 0;
+    position: relative;
+  }
+
+  @media (max-width: 700px) {
+    .dim-grid   { grid-template-columns: 1fr 1fr; }
+    .bench-grid { grid-template-columns: 1fr 1fr; }
+    .agg-grid   { grid-template-columns: 1fr; }
+    .uses-grid  { grid-template-columns: 1fr 1fr; }
+    .diamond-branches { flex-direction: column; }
+  }
+
+    /* ── Tool nav toggle ── */
+    .tool-nav {
+      position: sticky;
+      top: 0;
+      z-index: 40;
+      background: #fff;
+      border-bottom: 1.5px solid #e2e8f0;
+      box-shadow: 0 1px 6px rgba(0,0,0,.06);
+    }
+    .tool-nav-inner {
+      max-width: 72rem;
+      margin: 0 auto;
+      padding: 0 1.5rem;
+      display: flex;
+      gap: 4px;
+      align-items: center;
+      height: 44px;
+    }
+    .nav-btn {
+      display: inline-flex;
+      align-items: center;
+      padding: 5px 14px;
+      border-radius: 8px;
+      font-size: 12px;
+      font-weight: 700;
+      color: #64748b;
+      text-decoration: none;
+      border: 1.5px solid transparent;
+      -webkit-transition: all 0.15s;
+      transition: all 0.15s;
+      white-space: nowrap;
+    }
+    .nav-btn:hover { background: #f1f5f9; color: #0f172a; border-color: #e2e8f0; }
+    .nav-btn-active { background: #fff1f2; color: #C8102E; border-color: #fecdd3; }
+    .nav-btn-active:hover { background: #ffe4e6; color: #C8102E; }
+    @media print { .tool-nav { display: none !important; } }
+  </style>
+</head>
+<body>
+<!-- ── TOOL NAV TOGGLE ── -->
+<nav class="tool-nav" role="navigation" aria-label="Tool navigation" style="position:sticky;top:0;z-index:40;background:#fff;border-bottom:1.5px solid #e2e8f0;box-shadow:0 1px 6px rgba(0,0,0,.06);">
+  <div style="max-width:72rem;margin:0 auto;padding:0 1.5rem;display:flex;gap:4px;align-items:center;height:44px;">
+    <a href="index.html" class="nav-btn">Excellence Matrix</a>
+      <a href="srim-reporting-tool.html" class="nav-btn">SRIM Self-Report</a>
+      <a href="srim-flowchart.html" class="nav-btn nav-btn-active" aria-current="page">Flowchart</a>
+  </div>
+</nav>
+
+
+<!-- ─── PAGE HEADER ─── -->
+<div class="page-header">
+  <div class="eyebrow">UPF-BSM · Scholarly Research Impact Matrix</div>
+  <h1>SRIM System Flowchart</h1>
+  <p>How a researcher inputs their activity, earns a score on the 1,000-point scale, and how individual scores aggregate to give the School the full picture of research performance.</p>
+</div>
+
+<!-- ─── LEGEND ─── -->
+<div class="legend">
+  <div class="legend-item"><div class="legend-dot" style="background:#1e3a5f"></div> Start / End</div>
+  <div class="legend-item"><div class="legend-dot" style="background:#e2e8f0; border:1.5px solid #cbd5e1"></div> Process Step</div>
+  <div class="legend-item"><div class="legend-dot" style="background:#fffbeb; border:1.5px solid #f59e0b"></div> Decision</div>
+  <div class="legend-item"><div class="legend-dot" style="background:#dbeafe"></div> Stage 1 Scoring</div>
+  <div class="legend-item"><div class="legend-dot" style="background:#d1fae5"></div> Stage 2 Scoring</div>
+  <div class="legend-item"><div class="legend-dot" style="background:#fde68a"></div> Multipliers / Bonus</div>
+  <div class="legend-item"><div class="legend-dot" style="background:#fce7f3"></div> School Aggregation</div>
+</div>
+
+
+<!-- ─── FLOW CANVAS ─── -->
+<div class="flow-canvas">
+
+  <!-- ① START -->
+  <div class="node-start">
+    <div class="label">Researcher Opens SRIM Tool</div>
+    <div class="sub">Self-reporting · Digital or paper form</div>
+  </div>
+
+  <div class="arrow"><div class="arrow-line"></div><div class="arrow-head"></div></div>
+
+  <!-- ② IDENTITY INPUT -->
+  <div class="phase-label phase-input">① Input Phase</div>
+  <div class="node node-process">
+    <div class="node-title">Enter Profile Information</div>
+    <div class="node-desc">Name · Department · Position (Assistant / Associate / Full / Adjunct) · Academic Year<br>
+    Position determines default benchmark expectations for interpretation.</div>
+  </div>
+
+  <div class="arrow"><div class="arrow-line"></div><div class="arrow-head"></div></div>
+
+  <!-- ③ 5 DIMENSIONS -->
+  <div class="dimensions-card">
+    <div class="card-title">Log Activity Across 5 Dimensions</div>
+    <div class="dim-grid">
+      <div class="dim-pill dim-1"><span class="dim-num">D1</span>Scholarly Output &amp; Rigor</div>
+      <div class="dim-pill dim-2"><span class="dim-num">D2</span>Funded Research Projects</div>
+      <div class="dim-pill dim-3"><span class="dim-num">D3</span>Funded Knowledge Transfer &amp; Impact</div>
+      <div class="dim-pill dim-4"><span class="dim-num">D4</span>Educational Mentorship</div>
+      <div class="dim-pill dim-5"><span class="dim-num">D5</span>Purpose-Driven Responsibility</div>
+    </div>
+    <div style="margin-top:12px; font-size:11.5px; color:#64748b; line-height:1.55;">
+      For each dimension, the researcher selects a <strong>Stage</strong> (1 or 2) and uses <strong>+</strong> to log each activity instance. The same activity may be counted multiple times (e.g. 3 funded publications = 3 instances). Evidence notes and funding amounts are added where applicable.
+    </div>
+  </div>
+
+  <div class="arrow"><div class="arrow-line"></div><div class="arrow-head"></div></div>
+
+  <!-- ④ STAGE DECISION -->
+  <div class="phase-label phase-score" style="margin-top:8px;">② Scoring Phase</div>
+
+  <div class="diamond-wrap">
+    <div class="diamond">
+      <div class="diamond-text">Which Stage<br>for this dim?</div>
+    </div>
+  </div>
+
+  <!-- branches -->
+  <div class="diamond-branches">
+    <div class="diamond-branch">
+      <div class="branch-label branch-no">Stage 1 — Pipeline</div>
+      <div class="branch-node">
+        <strong>10 pts per instance</strong><br>
+        Max <strong>7 instances</strong> count toward score<br>
+        → Max <strong>70 pts</strong> per dimension<br>
+        <span style="font-size:10px;color:#94a3b8;margin-top:4px;display:block">Extra instances documented but don't add points</span>
+      </div>
+    </div>
+    <div class="diamond-branch">
+      <div class="branch-label branch-yes">Stage 2 — Outcome</div>
+      <div class="branch-node">
+        <strong>20 pts per instance</strong> (×2 multiplier)<br>
+        Max <strong>6 instances</strong> count toward score<br>
+        → Max <strong>120 pts</strong> per dimension<br>
+        <span style="font-size:10px;color:#94a3b8;margin-top:4px;display:block">Stage 1 cap remains 70 pts; S1+S2 combined cap = 120</span>
+      </div>
+    </div>
+  </div>
+
+  <div class="arrow"><div class="arrow-line" style="height:22px"></div><div class="arrow-head"></div></div>
+
+  <!-- ⑤ FUNDING MULTIPLIER DECISION -->
+  <div class="diamond-wrap">
+    <div class="diamond">
+      <div class="diamond-text">Dim 2 or 3<br>at Stage 2?</div>
+    </div>
+  </div>
+
+  <div class="diamond-branches">
+    <div class="diamond-branch">
+      <div class="branch-label branch-yes">Yes — Apply Funding Multiplier</div>
+      <div class="branch-node">
+        Based on <strong>Direct Income to UPF-BSM</strong>:<br>
+        <strong>×1.2</strong> &nbsp;€40K – €60K &nbsp;·&nbsp; <strong>×1.5</strong> &nbsp;€60K – €300K &nbsp;·&nbsp; <strong>×2.0</strong> &nbsp;€300K+<br>
+        <span style="font-size:10px;color:#94a3b8;margin-top:4px;display:block">Applied to that dimension's Stage 2 points only</span>
+      </div>
+    </div>
+    <div class="diamond-branch">
+      <div class="branch-label branch-no">No — No Multiplier</div>
+      <div class="branch-node">
+        Dims 1, 4, 5 have no funding multiplier.<br>
+        Scoring proceeds at base rate.<br>
+        <span style="font-size:10px;color:#94a3b8;margin-top:4px;display:block">&nbsp;</span>
+      </div>
+    </div>
+  </div>
+
+  <div class="arrow"><div class="arrow-line" style="height:22px"></div><div class="arrow-head"></div></div>
+
+  <!-- ⑥ SUBTOTAL -->
+  <div class="node node-process">
+    <div class="node-title">Calculate Sub-Total Across All 5 Dimensions</div>
+    <div class="node-desc">Each dimension contributes up to 120 pts. Sum all 5 dimension scores → <strong>raw sub-total</strong> (max 600 pts before bonus).</div>
+  </div>
+
+  <div class="arrow"><div class="arrow-line"></div><div class="arrow-head"></div></div>
+
+  <!-- ⑦ HOLISTIC DECISION -->
+  <div class="diamond-wrap">
+    <div class="diamond">
+      <div class="diamond-text">4 or more<br>dims at Stage 2?</div>
+    </div>
+  </div>
+
+  <div class="diamond-branches">
+    <div class="diamond-branch">
+      <div class="branch-label branch-yes">Yes — Holistic Bonus Unlocked</div>
+      <div class="branch-node">
+        Total score × <strong>1.5 multiplier</strong><br>
+        Rewards breadth across the full research profile<br>
+        <span style="font-size:10px; color:#d97706; font-weight:700; margin-top:4px; display:block">🏆 Badge of Excellence eligible at ≥ 650 pts</span>
+      </div>
+    </div>
+    <div class="diamond-branch">
+      <div class="branch-label branch-no">No — No Holistic Bonus</div>
+      <div class="branch-node">
+        Score carries forward without the ×1.5 boost.<br>
+        Researcher can still earn high scores within fewer dimensions.<br>
+        <span style="font-size:10px;color:#94a3b8;margin-top:4px;display:block">&nbsp;</span>
+      </div>
+    </div>
+  </div>
+
+  <div class="arrow"><div class="arrow-line" style="height:22px"></div><div class="arrow-head"></div></div>
+
+  <!-- ⑧ SCORE SUMMARY TABLE -->
+  <div class="scoring-card">
+    <div style="font-size:11px;font-weight:800;letter-spacing:.14em;text-transform:uppercase;color:#94a3b8;margin-bottom:14px;">Score Calculation Summary</div>
+    <div class="scoring-rows">
+      <div class="scoring-row sr-s1">
+        <div class="sr-badge">Stage 1</div>
+        <div class="sr-text">Up to 7 instances per dimension × 10 pts each (max 70 pts/dim)</div>
+        <div class="sr-pts">≤ 70 pts<br><span style="font-size:9px;font-weight:500;color:#93c5fd">per dim</span></div>
+      </div>
+      <div class="scoring-row sr-s2">
+        <div class="sr-badge">Stage 2</div>
+        <div class="sr-text">Up to 6 instances per dimension × 20 pts each (max 120 pts/dim, S1+S2 combined)</div>
+        <div class="sr-pts">≤ 120 pts<br><span style="font-size:9px;font-weight:500;color:#6ee7b7">per dim</span></div>
+      </div>
+      <div class="scoring-row sr-mult">
+        <div class="sr-badge">Funding ×</div>
+        <div class="sr-text">Dims 2 &amp; 3 at S2: ×1.2 / ×1.5 / ×2.0 based on Direct Income to UPF-BSM</div>
+        <div class="sr-pts">Up to ×2.0<br><span style="font-size:9px;font-weight:500;color:#fb923c">on S2 pts</span></div>
+      </div>
+      <div class="scoring-row sr-hol">
+        <div class="sr-badge">Holistic</div>
+        <div class="sr-text">4+ dimensions at Stage 2 → entire total × 1.5 bonus applied</div>
+        <div class="sr-pts">×1.5<br><span style="font-size:9px;font-weight:500;color:#ca8a04">bonus</span></div>
+      </div>
+      <div class="scoring-row sr-cap">
+        <div class="sr-badge">Cap</div>
+        <div class="sr-text">Final score is capped at 1,000 pts regardless of multipliers</div>
+        <div class="sr-pts">1,000<br><span style="font-size:9px;font-weight:500;color:#64748b">maximum</span></div>
+      </div>
+    </div>
+  </div>
+
+  <div class="arrow"><div class="arrow-line"></div><div class="arrow-head"></div></div>
+
+  <!-- ⑨ BENCHMARKS -->
+  <div class="benchmark-card">
+    <div style="font-size:11px;font-weight:800;letter-spacing:.14em;text-transform:uppercase;color:#94a3b8;">Score Interpreted Against Career Benchmarks</div>
+    <div class="bench-grid">
+      <div class="bench-box bench-junior">
+        <div class="b-range">180–250</div>
+        <div class="b-label">Junior</div>
+        <div class="b-note">Entry-level productivity; pipeline activity visible</div>
+      </div>
+      <div class="bench-box bench-senior">
+        <div class="b-range">450–500</div>
+        <div class="b-label">Senior</div>
+        <div class="b-note">Sustained output; funded work or strong S1 across dims</div>
+      </div>
+      <div class="bench-box bench-badge">
+        <div class="b-range">650+</div>
+        <div class="b-label">🏆 Excellence</div>
+        <div class="b-note">Requires 4+ dims at S2 AND ≥ 650 pts total</div>
+      </div>
+      <div class="bench-box bench-max">
+        <div class="b-range">1,000</div>
+        <div class="b-label">Maximum</div>
+        <div class="b-note">Theoretical ceiling; capped after all multipliers</div>
+      </div>
+    </div>
+  </div>
+
+  <div class="arrow"><div class="arrow-line"></div><div class="arrow-head"></div></div>
+
+  <!-- ⑩ INDIVIDUAL RECORD STORED -->
+  <div class="node node-process">
+    <div class="node-title">Individual Researcher Record Stored / Submitted</div>
+    <div class="node-desc">Score, stage breakdown per dimension, evidence notes, funding amounts, and benchmark classification are recorded for the reporting period.</div>
+  </div>
+
+  <div class="arrow">
+    <div class="arrow-label">× All Faculty</div>
+    <div class="arrow-line" style="height:36px"></div>
+    <div class="arrow-head"></div>
+  </div>
+
+  <!-- ⑪ AGGREGATION -->
+  <div class="phase-label phase-agg" style="align-self:center;">③ Aggregation Phase</div>
+  <div class="agg-card wide">
+    <div style="font-size:11px;font-weight:800;letter-spacing:.14em;text-transform:uppercase;color:#94a3b8;">How Individual Scores Roll Up → The Whole Picture</div>
+    <div class="agg-grid">
+      <div class="agg-box agg-dept">
+        <div class="ag-icon">🏛️</div>
+        <div class="ag-title">By Department</div>
+        <div class="ag-desc">Average &amp; distribution of scores per department. Reveals which areas are driving research output and which need support.</div>
+      </div>
+      <div class="agg-box agg-cohort">
+        <div class="ag-icon">👥</div>
+        <div class="ag-title">By Career Stage</div>
+        <div class="ag-desc">Junior vs. Senior vs. Full Professor cohorts compared against their respective benchmarks. Highlights progression paths and outliers.</div>
+      </div>
+      <div class="agg-box agg-school">
+        <div class="ag-icon">🏫</div>
+        <div class="ag-title">School-Wide Dashboard</div>
+        <div class="ag-desc">Total and mean SRIM scores across all faculty. Dimension-level heatmap shows School's collective strengths &amp; gaps in research strategy.</div>
+      </div>
+    </div>
+    <div style="margin-top:14px; background:#f8fafc; border:1px dashed #cbd5e1; border-radius:10px; padding:12px 14px; font-size:11.5px; color:#475569; line-height:1.6;">
+      <strong>Key aggregated metrics the School can track:</strong>&nbsp;
+      % faculty reaching Junior / Senior / Excellence benchmarks &nbsp;·&nbsp;
+      Average score per dimension (where is the School strong or weak?) &nbsp;·&nbsp;
+      Stage 2 adoption rate across dimensions &nbsp;·&nbsp;
+      Funded research income growth over time &nbsp;·&nbsp;
+      Holistic Bonus achievers (breadth of research excellence)
+    </div>
+  </div>
+
+  <div class="arrow"><div class="arrow-line"></div><div class="arrow-head"></div></div>
+
+  <!-- ⑫ USES -->
+  <div class="phase-label phase-school" style="align-self:center;">④ Decision &amp; Action Phase</div>
+  <div class="uses-card wide">
+    <div style="font-size:11px;font-weight:800;letter-spacing:.14em;text-transform:uppercase;color:#94a3b8;">How the School Uses Aggregated Data</div>
+    <div class="uses-grid">
+      <div class="use-box">
+        <div class="u-icon">📊</div>
+        <div class="u-label">Faculty Reviews</div>
+        <div class="u-sub">Annual performance conversations grounded in objective data</div>
+      </div>
+      <div class="use-box">
+        <div class="u-icon">💰</div>
+        <div class="u-label">FRIP Incentives</div>
+        <div class="u-sub">Score-based allocation of research incentives &amp; teaching buyouts</div>
+      </div>
+      <div class="use-box">
+        <div class="u-icon">🎯</div>
+        <div class="u-label">Strategic Planning</div>
+        <div class="u-sub">Identify dimension gaps to target School-wide investment &amp; hiring</div>
+      </div>
+      <div class="use-box">
+        <div class="u-icon">📈</div>
+        <div class="u-label">Benchmarking</div>
+        <div class="u-sub">Track School's research trajectory year-over-year and vs. peers</div>
+      </div>
+    </div>
+  </div>
+
+  <div class="arrow"><div class="arrow-line"></div><div class="arrow-head"></div></div>
+
+  <!-- END -->
+  <div class="node-end">
+    <div class="label">Complete Research Performance Picture</div>
+    <div class="sub">Individual · Departmental · School-Wide</div>
+  </div>
+
+</div><!-- /flow-canvas -->
+
+<!-- ═══════════════════════════════════════════════════════════════
+     SCHOOL-WIDE DASHBOARD EXAMPLE
+═══════════════════════════════════════════════════════════════ -->
+
+<div style="max-width:1100px;margin:70px auto 0;border-top:2px solid #e2e8f0;padding-top:52px;">
+
+  <!-- Header -->
+  <div style="text-align:center;margin-bottom:36px;">
+    <div style="font-size:11px;font-weight:800;letter-spacing:.18em;text-transform:uppercase;color:#C8102E;margin-bottom:8px;">Example Output</div>
+    <h2 style="font-size:24px;font-weight:900;color:#0f172a;margin-bottom:8px;">School-Wide SRIM Dashboard</h2>
+    <p style="font-size:13px;color:#64748b;max-width:560px;margin:0 auto;line-height:1.6;">
+      What the aggregated view looks like for Research Leadership — Academic Year 2024–25 · <em>Illustrative data, 42 faculty</em>
+    </p>
+  </div>
+
+  <!-- ── ROW 1: KPI STRIP ── -->
+  <div style="display:grid;grid-template-columns:repeat(5,1fr);gap:12px;margin-bottom:20px;">
+
+    <div style="background:white;border-radius:14px;padding:18px 16px;text-align:center;border:1.5px solid #e2e8f0;box-shadow:0 2px 10px rgba(0,0,0,.05);">
+      <div style="font-size:28px;font-weight:900;color:#0f172a;">42</div>
+      <div style="font-size:10px;font-weight:700;color:#94a3b8;text-transform:uppercase;letter-spacing:.1em;margin-top:3px;">Faculty Reporting</div>
+      <div style="font-size:11px;color:#22c55e;font-weight:700;margin-top:6px;">▲ 100% submission</div>
+    </div>
+
+    <div style="background:white;border-radius:14px;padding:18px 16px;text-align:center;border:1.5px solid #e2e8f0;box-shadow:0 2px 10px rgba(0,0,0,.05);">
+      <div style="font-size:28px;font-weight:900;color:#1d4ed8;">387</div>
+      <div style="font-size:10px;font-weight:700;color:#94a3b8;text-transform:uppercase;letter-spacing:.1em;margin-top:3px;">School Avg. Score</div>
+      <div style="font-size:11px;color:#1d4ed8;font-weight:700;margin-top:6px;">Senior benchmark</div>
+    </div>
+
+    <div style="background:white;border-radius:14px;padding:18px 16px;text-align:center;border:1.5px solid #e2e8f0;box-shadow:0 2px 10px rgba(0,0,0,.05);">
+      <div style="font-size:28px;font-weight:900;color:#d97706;">9</div>
+      <div style="font-size:10px;font-weight:700;color:#94a3b8;text-transform:uppercase;letter-spacing:.1em;margin-top:3px;">🏆 Badge of Excellence</div>
+      <div style="font-size:11px;color:#d97706;font-weight:700;margin-top:6px;">21% of faculty</div>
+    </div>
+
+    <div style="background:white;border-radius:14px;padding:18px 16px;text-align:center;border:1.5px solid #e2e8f0;box-shadow:0 2px 10px rgba(0,0,0,.05);">
+      <div style="font-size:28px;font-weight:900;color:#7e22ce;">68%</div>
+      <div style="font-size:10px;font-weight:700;color:#94a3b8;text-transform:uppercase;letter-spacing:.1em;margin-top:3px;">Stage 2 Adoption</div>
+      <div style="font-size:11px;color:#7e22ce;font-weight:700;margin-top:6px;">Across all dims</div>
+    </div>
+
+    <div style="background:white;border-radius:14px;padding:18px 16px;text-align:center;border:1.5px solid #e2e8f0;box-shadow:0 2px 10px rgba(0,0,0,.05);">
+      <div style="font-size:28px;font-weight:900;color:#C8102E;">€4.2M</div>
+      <div style="font-size:10px;font-weight:700;color:#94a3b8;text-transform:uppercase;letter-spacing:.1em;margin-top:3px;">Direct Income (UPF-BSM)</div>
+      <div style="font-size:11px;color:#C8102E;font-weight:700;margin-top:6px;">Dims 2 &amp; 3 combined</div>
+    </div>
+
+  </div>
+
+  <!-- ── ROW 2: BENCHMARK DISTRIBUTION + DIMENSION HEATMAP ── -->
+  <div style="display:grid;grid-template-columns:1fr 1fr;gap:16px;margin-bottom:20px;">
+
+    <!-- Benchmark Distribution Bar Chart -->
+    <div style="background:white;border-radius:14px;padding:22px 20px;border:1.5px solid #e2e8f0;box-shadow:0 2px 10px rgba(0,0,0,.05);">
+      <div style="font-size:11px;font-weight:800;letter-spacing:.14em;text-transform:uppercase;color:#94a3b8;margin-bottom:18px;">Faculty Benchmark Distribution</div>
+
+      <!-- Below Junior -->
+      <div style="margin-bottom:13px;">
+        <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:5px;">
+          <span style="font-size:11.5px;font-weight:600;color:#475569;">Below Junior (&lt;180)</span>
+          <span style="font-size:12px;font-weight:800;color:#94a3b8;">5 &nbsp;<span style="font-weight:500;font-size:10px;">12%</span></span>
+        </div>
+        <div style="background:#f1f5f9;border-radius:999px;height:9px;overflow:hidden;">
+          <div style="width:12%;height:100%;background:#cbd5e1;border-radius:999px;"></div>
+        </div>
+      </div>
+
+      <!-- Junior -->
+      <div style="margin-bottom:13px;">
+        <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:5px;">
+          <span style="font-size:11.5px;font-weight:600;color:#475569;">Junior &nbsp;<span style="color:#94a3b8;font-weight:400;">(180–449)</span></span>
+          <span style="font-size:12px;font-weight:800;color:#0369a1;">11 &nbsp;<span style="font-weight:500;font-size:10px;">26%</span></span>
+        </div>
+        <div style="background:#f1f5f9;border-radius:999px;height:9px;overflow:hidden;">
+          <div style="width:26%;height:100%;background:#38bdf8;border-radius:999px;"></div>
+        </div>
+      </div>
+
+      <!-- Senior -->
+      <div style="margin-bottom:13px;">
+        <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:5px;">
+          <span style="font-size:11.5px;font-weight:600;color:#475569;">Senior &nbsp;<span style="color:#94a3b8;font-weight:400;">(450–649)</span></span>
+          <span style="font-size:12px;font-weight:800;color:#15803d;">17 &nbsp;<span style="font-weight:500;font-size:10px;">40%</span></span>
+        </div>
+        <div style="background:#f1f5f9;border-radius:999px;height:9px;overflow:hidden;">
+          <div style="width:40%;height:100%;background:#4ade80;border-radius:999px;"></div>
+        </div>
+      </div>
+
+      <!-- Badge of Excellence -->
+      <div style="margin-bottom:4px;">
+        <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:5px;">
+          <span style="font-size:11.5px;font-weight:600;color:#475569;">🏆 Badge of Excellence &nbsp;<span style="color:#94a3b8;font-weight:400;">(650+)</span></span>
+          <span style="font-size:12px;font-weight:800;color:#d97706;">9 &nbsp;<span style="font-weight:500;font-size:10px;">21%</span></span>
+        </div>
+        <div style="background:#f1f5f9;border-radius:999px;height:9px;overflow:hidden;">
+          <div style="width:21%;height:100%;background:linear-gradient(90deg,#f59e0b,#fbbf24);border-radius:999px;"></div>
+        </div>
+      </div>
+
+      <!-- Divider + note -->
+      <div style="margin-top:16px;padding-top:14px;border-top:1px solid #f1f5f9;font-size:11px;color:#94a3b8;line-height:1.55;">
+        <strong style="color:#475569;">Notable:</strong> 1 faculty member reached the maximum cap of 1,000 pts. 5 researchers close to the Badge threshold (620–649).
+      </div>
+    </div>
+
+    <!-- Dimension Heatmap -->
+    <div style="background:white;border-radius:14px;padding:22px 20px;border:1.5px solid #e2e8f0;box-shadow:0 2px 10px rgba(0,0,0,.05);">
+      <div style="font-size:11px;font-weight:800;letter-spacing:.14em;text-transform:uppercase;color:#94a3b8;margin-bottom:18px;">Avg. Score per Dimension &nbsp;(out of 120)</div>
+
+      <!-- D1 -->
+      <div style="margin-bottom:12px;">
+        <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:5px;">
+          <span style="font-size:11px;font-weight:700;color:#1d4ed8;">D1 · Scholarly Output &amp; Rigor</span>
+          <span style="font-size:13px;font-weight:900;color:#1d4ed8;">98 / 120</span>
+        </div>
+        <div style="background:#eff6ff;border-radius:999px;height:10px;overflow:hidden;">
+          <div style="width:81.7%;height:100%;background:linear-gradient(90deg,#3b82f6,#60a5fa);border-radius:999px;"></div>
+        </div>
+      </div>
+
+      <!-- D2 -->
+      <div style="margin-bottom:12px;">
+        <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:5px;">
+          <span style="font-size:11px;font-weight:700;color:#15803d;">D2 · Funded Research Projects</span>
+          <span style="font-size:13px;font-weight:900;color:#15803d;">74 / 120</span>
+        </div>
+        <div style="background:#f0fdf4;border-radius:999px;height:10px;overflow:hidden;">
+          <div style="width:61.7%;height:100%;background:linear-gradient(90deg,#22c55e,#4ade80);border-radius:999px;"></div>
+        </div>
+      </div>
+
+      <!-- D3 -->
+      <div style="margin-bottom:12px;">
+        <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:5px;">
+          <span style="font-size:11px;font-weight:700;color:#c2410c;">D3 · Knowledge Transfer &amp; Impact</span>
+          <span style="font-size:13px;font-weight:900;color:#c2410c;">52 / 120</span>
+        </div>
+        <div style="background:#fff7ed;border-radius:999px;height:10px;overflow:hidden;">
+          <div style="width:43.3%;height:100%;background:linear-gradient(90deg,#f97316,#fb923c);border-radius:999px;"></div>
+        </div>
+        <div style="font-size:10px;color:#f97316;font-weight:700;margin-top:3px;">⚠ Lowest dimension — strategic gap identified</div>
+      </div>
+
+      <!-- D4 -->
+      <div style="margin-bottom:12px;">
+        <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:5px;">
+          <span style="font-size:11px;font-weight:700;color:#7e22ce;">D4 · Educational Mentorship</span>
+          <span style="font-size:13px;font-weight:900;color:#7e22ce;">83 / 120</span>
+        </div>
+        <div style="background:#fdf4ff;border-radius:999px;height:10px;overflow:hidden;">
+          <div style="width:69.2%;height:100%;background:linear-gradient(90deg,#a855f7,#c084fc);border-radius:999px;"></div>
+        </div>
+      </div>
+
+      <!-- D5 -->
+      <div style="margin-bottom:4px;">
+        <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:5px;">
+          <span style="font-size:11px;font-weight:700;color:#b91c1c;">D5 · Purpose-Driven Responsibility</span>
+          <span style="font-size:13px;font-weight:900;color:#b91c1c;">61 / 120</span>
+        </div>
+        <div style="background:#fef2f2;border-radius:999px;height:10px;overflow:hidden;">
+          <div style="width:50.8%;height:100%;background:linear-gradient(90deg,#ef4444,#f87171);border-radius:999px;"></div>
+        </div>
+      </div>
+    </div>
+
+  </div>
+
+  <!-- ── ROW 3: DEPARTMENT BREAKDOWN + YEAR-OVER-YEAR ── -->
+  <div style="display:grid;grid-template-columns:1.1fr 0.9fr;gap:16px;margin-bottom:20px;">
+
+    <!-- Department Table -->
+    <div style="background:white;border-radius:14px;padding:22px 20px;border:1.5px solid #e2e8f0;box-shadow:0 2px 10px rgba(0,0,0,.05);">
+      <div style="font-size:11px;font-weight:800;letter-spacing:.14em;text-transform:uppercase;color:#94a3b8;margin-bottom:16px;">Score by Department</div>
+      <table style="width:100%;border-collapse:collapse;font-size:12px;">
+        <thead>
+          <tr style="border-bottom:2px solid #f1f5f9;">
+            <th style="text-align:left;padding:7px 0;font-size:10px;font-weight:800;color:#94a3b8;text-transform:uppercase;letter-spacing:.1em;">Department</th>
+            <th style="text-align:center;padding:7px 0;font-size:10px;font-weight:800;color:#94a3b8;text-transform:uppercase;letter-spacing:.1em;">n</th>
+            <th style="text-align:right;padding:7px 0;font-size:10px;font-weight:800;color:#94a3b8;text-transform:uppercase;letter-spacing:.1em;">Avg Score</th>
+            <th style="text-align:right;padding:7px 0;font-size:10px;font-weight:800;color:#94a3b8;text-transform:uppercase;letter-spacing:.1em;">🏆 Count</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr style="border-bottom:1px solid #f8fafc;">
+            <td style="padding:9px 0;font-weight:600;color:#1e293b;">Economics &amp; Finance</td>
+            <td style="text-align:center;color:#64748b;">12</td>
+            <td style="text-align:right;font-weight:900;color:#1d4ed8;">451</td>
+            <td style="text-align:right;color:#d97706;font-weight:700;">4</td>
+          </tr>
+          <tr style="border-bottom:1px solid #f8fafc;">
+            <td style="padding:9px 0;font-weight:600;color:#1e293b;">Strategy &amp; Management</td>
+            <td style="text-align:center;color:#64748b;">11</td>
+            <td style="text-align:right;font-weight:900;color:#15803d;">412</td>
+            <td style="text-align:right;color:#d97706;font-weight:700;">3</td>
+          </tr>
+          <tr style="border-bottom:1px solid #f8fafc;">
+            <td style="padding:9px 0;font-weight:600;color:#1e293b;">Marketing &amp; Consumer Insight</td>
+            <td style="text-align:center;color:#64748b;">9</td>
+            <td style="text-align:right;font-weight:900;color:#7e22ce;">376</td>
+            <td style="text-align:right;color:#d97706;font-weight:700;">2</td>
+          </tr>
+          <tr style="border-bottom:1px solid #f8fafc;">
+            <td style="padding:9px 0;font-weight:600;color:#1e293b;">People, Org. &amp; Society</td>
+            <td style="text-align:center;color:#64748b;">7</td>
+            <td style="text-align:right;font-weight:900;color:#c2410c;">298</td>
+            <td style="text-align:right;color:#d97706;font-weight:700;">0</td>
+          </tr>
+          <tr>
+            <td style="padding:9px 0;font-weight:600;color:#1e293b;">Innovation &amp; Technology</td>
+            <td style="text-align:center;color:#64748b;">3</td>
+            <td style="text-align:right;font-weight:900;color:#0369a1;">505</td>
+            <td style="text-align:right;color:#d97706;font-weight:700;">0</td>
+          </tr>
+        </tbody>
+        <tfoot>
+          <tr style="border-top:2px solid #f1f5f9;background:#f8fafc;">
+            <td style="padding:9px 0;font-weight:800;color:#0f172a;">School Total</td>
+            <td style="text-align:center;font-weight:800;color:#0f172a;">42</td>
+            <td style="text-align:right;font-weight:900;color:#C8102E;">387</td>
+            <td style="text-align:right;color:#d97706;font-weight:700;">9</td>
+          </tr>
+        </tfoot>
+      </table>
+      <div style="margin-top:12px;font-size:10.5px;color:#94a3b8;line-height:1.55;">
+        ⚠ <strong style="color:#475569;">People, Org. &amp; Society</strong> avg (298) is below the Senior benchmark. Recommend targeted FRIP support for Dims 2 &amp; 3 in AY 2025–26.
+      </div>
+    </div>
+
+    <!-- Year-over-Year Trend -->
+    <div style="background:white;border-radius:14px;padding:22px 20px;border:1.5px solid #e2e8f0;box-shadow:0 2px 10px rgba(0,0,0,.05);">
+      <div style="font-size:11px;font-weight:800;letter-spacing:.14em;text-transform:uppercase;color:#94a3b8;margin-bottom:16px;">School Avg. Score — Year-over-Year</div>
+
+      <!-- Simulated bar chart -->
+      <div style="display:flex;align-items:flex-end;gap:10px;height:130px;padding-bottom:4px;border-bottom:2px solid #f1f5f9;margin-bottom:10px;">
+
+        <div style="flex:1;display:flex;flex-direction:column;align-items:center;gap:4px;">
+          <div style="font-size:10px;font-weight:700;color:#94a3b8;">251</div>
+          <div style="width:100%;height:33%;background:#dbeafe;border-radius:6px 6px 0 0;"></div>
+          <div style="font-size:10px;color:#94a3b8;">AY 22</div>
+        </div>
+        <div style="flex:1;display:flex;flex-direction:column;align-items:center;gap:4px;">
+          <div style="font-size:10px;font-weight:700;color:#94a3b8;">298</div>
+          <div style="width:100%;height:39%;background:#bfdbfe;border-radius:6px 6px 0 0;"></div>
+          <div style="font-size:10px;color:#94a3b8;">AY 23</div>
+        </div>
+        <div style="flex:1;display:flex;flex-direction:column;align-items:center;gap:4px;">
+          <div style="font-size:10px;font-weight:700;color:#94a3b8;">341</div>
+          <div style="width:100%;height:45%;background:#93c5fd;border-radius:6px 6px 0 0;"></div>
+          <div style="font-size:10px;color:#94a3b8;">AY 24</div>
+        </div>
+        <div style="flex:1;display:flex;flex-direction:column;align-items:center;gap:4px;">
+          <div style="font-size:11px;font-weight:900;color:#C8102E;">387</div>
+          <div style="width:100%;height:51%;background:linear-gradient(to top,#C8102E,#f87171);border-radius:6px 6px 0 0;"></div>
+          <div style="font-size:10px;font-weight:700;color:#C8102E;">AY 25</div>
+        </div>
+
+      </div>
+
+      <div style="font-size:11px;color:#15803d;font-weight:700;margin-bottom:10px;">▲ +13.5% year-over-year growth in avg. SRIM score</div>
+
+      <!-- Stage 2 adoption trend -->
+      <div style="border-top:1px solid #f1f5f9;padding-top:12px;">
+        <div style="font-size:10px;font-weight:800;letter-spacing:.1em;text-transform:uppercase;color:#94a3b8;margin-bottom:8px;">Stage 2 Adoption Rate</div>
+        <div style="display:flex;align-items:center;gap:8px;font-size:11px;font-weight:600;color:#475569;">
+          <span>AY22: 34%</span>
+          <div style="flex:1;height:2px;background:linear-gradient(90deg,#dbeafe 0%,#C8102E 100%);border-radius:999px;"></div>
+          <span style="color:#C8102E;font-weight:800;">AY25: 68%</span>
+        </div>
+        <div style="font-size:10.5px;color:#94a3b8;margin-top:6px;line-height:1.5;">Doubling of outcome-level reporting over 3 years — indicator of research maturity.</div>
+      </div>
+    </div>
+
+  </div>
+
+  <!-- ── ROW 4: INSIGHTS PANEL ── -->
+  <div style="background:linear-gradient(135deg,#0f172a 0%,#1e3a5f 100%);border-radius:16px;padding:24px 28px;display:grid;grid-template-columns:repeat(3,1fr);gap:20px;">
+
+    <div>
+      <div style="font-size:10px;font-weight:800;letter-spacing:.16em;text-transform:uppercase;color:#94a3b8;margin-bottom:8px;">🟢 School Strength</div>
+      <div style="font-size:13px;font-weight:700;color:white;line-height:1.5;">D1 (Scholarly Output) is the strongest dimension (avg 98/120). High Stage 2 adoption in publications signals a maturing research culture.</div>
+    </div>
+
+    <div>
+      <div style="font-size:10px;font-weight:800;letter-spacing:.16em;text-transform:uppercase;color:#94a3b8;margin-bottom:8px;">🟡 Area of Focus</div>
+      <div style="font-size:13px;font-weight:700;color:white;line-height:1.5;">D3 (Knowledge Transfer) is the School's weakest link (avg 52/120). Investing in industry chairs and observatories would unlock funding multipliers and boost overall scores.</div>
+    </div>
+
+    <div>
+      <div style="font-size:10px;font-weight:800;letter-spacing:.16em;text-transform:uppercase;color:#94a3b8;margin-bottom:8px;">🔵 FRIP Recommendation</div>
+      <div style="font-size:13px;font-weight:700;color:white;line-height:1.5;">5 researchers sit between 620–649 pts. Targeted support (FRIP buyout or seed funding) could push them over the Badge of Excellence threshold in AY 2025–26.</div>
+    </div>
+
+  </div>
+
+</div>
+
+<!-- ═══════════════════════════════════════════════════════════════
+     BIBLIOGRAPHY
+═══════════════════════════════════════════════════════════════ -->
+<div style="max-width:1100px;margin:60px auto 0;border-top:2px solid #e2e8f0;padding-top:48px;">
+
+  <div style="text-align:center;margin-bottom:30px;">
+    <div style="font-size:11px;font-weight:800;letter-spacing:.18em;text-transform:uppercase;color:#C8102E;margin-bottom:8px;">Sources</div>
+    <h2 style="font-size:20px;font-weight:900;color:#0f172a;margin-bottom:8px;">Bibliography: Faculty Research Excellence &amp; Impact</h2>
+    <p style="font-size:12px;color:#64748b;max-width:600px;margin:0 auto;line-height:1.6;">Academic foundations and policy frameworks informing the SRIM design</p>
+  </div>
+
+  <div style="background:white;border-radius:16px;border:1.5px solid #e2e8f0;box-shadow:0 2px 12px rgba(0,0,0,.05);padding:28px 32px;">
+    <ol style="list-style:decimal;padding-left:22px;display:flex;flex-direction:column;gap:13px;">
+
+      <li style="font-size:12px;color:#334155;line-height:1.75;">
+        AACSB International. (2022, July). <em>Accelerating a framework for societal impact leadership: Insights from the 2021–22 Innovation Committee.</em>
+        <a href="https://www.aacsb.edu/insights/briefs/accelerating-a-framework-for-societal-impact-leadership" target="_blank" style="color:#C8102E;text-decoration:none;font-weight:600;word-break:break-all;">https://www.aacsb.edu/insights/briefs/accelerating-a-framework-for-societal-impact-leadership</a>
+      </li>
+
+      <li style="font-size:12px;color:#334155;line-height:1.75;">
+        AACSB International. (2025, October 19). <em>Global research impact framework: Exposure draft.</em>
+        <a href="https://www.aacsb.edu/insights/articles/2025/10/global-research-impact-framework-exposure-draft" target="_blank" style="color:#C8102E;text-decoration:none;font-weight:600;word-break:break-all;">https://www.aacsb.edu/insights/articles/2025/10/global-research-impact-framework-exposure-draft</a>
+      </li>
+
+      <li style="font-size:12px;color:#334155;line-height:1.75;">
+        Australian Business Deans Council (ABDC). (2022). <em>The ABDC societal impact framework: Capturing the productive interactions between research and stakeholders.</em>
+        <a href="https://abdc.edu.au/research/societal-impact-framework/" target="_blank" style="color:#C8102E;text-decoration:none;font-weight:600;word-break:break-all;">https://abdc.edu.au/research/societal-impact-framework/</a>
+      </li>
+
+      <li style="font-size:12px;color:#334155;line-height:1.75;">
+        Gamoran, A. (2023). Advancing institutional change to encourage faculty participation in research-practice partnerships. <em>Educational Policy, 37</em>(1), 31–55.
+        <a href="https://doi.org/10.1177/08959048221131564" target="_blank" style="color:#C8102E;text-decoration:none;font-weight:600;">https://doi.org/10.1177/08959048221131564</a>
+      </li>
+
+      <li style="font-size:12px;color:#334155;line-height:1.75;">
+        Garcia, C. E., &amp; Sanz-Menéndez, L. (2005). Competition for funding as an indicator of research competitiveness. <em>Scientometrics, 64</em>(3), 271–300.
+        <a href="https://doi.org/10.1007/s11192-005-0252-4" target="_blank" style="color:#C8102E;text-decoration:none;font-weight:600;">https://doi.org/10.1007/s11192-005-0252-4</a>
+      </li>
+
+      <li style="font-size:12px;color:#334155;line-height:1.75;">
+        Helmer, S., Blumenthal, D. B., &amp; Paschen, K. (2020). What is meaningful research and how should we measure it? <em>Scientometrics, 125</em>, 153–169.
+        <a href="https://doi.org/10.1007/s11192-020-03649-5" target="_blank" style="color:#C8102E;text-decoration:none;font-weight:600;">https://doi.org/10.1007/s11192-020-03649-5</a>
+      </li>
+
+      <li style="font-size:12px;color:#334155;line-height:1.75;">
+        Hengel, E., Sevilla, A., &amp; Smith, S. (2023). <em>Measuring research quality in a more inclusive way: Evidence from the UK Research Excellence Framework</em> (Working Paper). London School of Economics and Political Science.
+      </li>
+
+      <li style="font-size:12px;color:#334155;line-height:1.75;">
+        Horta, H., Huisman, J., &amp; Heitor, M. (2008). Does competitive research funding encourage diversity in higher education? <em>Science and Public Policy, 35</em>(3), 146–158.
+        <a href="https://doi.org/10.3152/030234208X299044" target="_blank" style="color:#C8102E;text-decoration:none;font-weight:600;">https://doi.org/10.3152/030234208X299044</a>
+      </li>
+
+      <li style="font-size:12px;color:#334155;line-height:1.75;">
+        Joly, B. M., Gray, C., Rand, J., Bizier, K., &amp; Pearson, K. (2025). Approaches and tools to measure individual-level research experience, activities, and outcomes: A narrative review. <em>Journal of Clinical and Translational Science, 9</em>, e161.
+        <a href="https://doi.org/10.1017/cts.2025.10076" target="_blank" style="color:#C8102E;text-decoration:none;font-weight:600;">https://doi.org/10.1017/cts.2025.10076</a>
+      </li>
+
+      <li style="font-size:12px;color:#334155;line-height:1.75;">
+        Lindgreen, A., &amp; Di Benedetto, C. A. (2024, September 26). Securing research funding: Practical support for academics. <em>Higher Education Policy Institute (HEPI).</em>
+        <a href="https://www.hepi.ac.uk/2024/09/26/securing-research-funding-practical-support-for-academics/" target="_blank" style="color:#C8102E;text-decoration:none;font-weight:600;word-break:break-all;">https://www.hepi.ac.uk/2024/09/26/securing-research-funding-practical-support-for-academics/</a>
+      </li>
+
+      <li style="font-size:12px;color:#334155;line-height:1.75;">
+        Ofir, Z., Schwandt, T., Duggan, C., &amp; McLean, R. (2016). <em>Research Quality Plus (RQ+): A holistic approach to evaluating research.</em> International Development Research Centre (IDRC).
+      </li>
+
+      <li style="font-size:12px;color:#334155;line-height:1.75;">
+        Reed, M. S., Ferré, M., Martin-Ortega, J., Blanche, R., Lawford-Rolfe, R., Dallimer, M., &amp; Holden, J. (2021). Evaluating impact from research: A methodological framework. <em>Research Policy, 50</em>(1), 104147.
+        <a href="https://doi.org/10.1016/j.respol.2020.104147" target="_blank" style="color:#C8102E;text-decoration:none;font-weight:600;">https://doi.org/10.1016/j.respol.2020.104147</a>
+      </li>
+
+      <li style="font-size:12px;color:#334155;line-height:1.75;">
+        Scholten, W., Franssen, T. P., van Drooge, L., de Rijcke, S., &amp; Hessels, L. K. (2021). Funding for few, anticipation among all: Effects of excellence funding on academic research groups. <em>Science and Public Policy, 48</em>(2), 265–275.
+        <a href="https://doi.org/10.1093/scipol/scab018" target="_blank" style="color:#C8102E;text-decoration:none;font-weight:600;">https://doi.org/10.1093/scipol/scab018</a>
+      </li>
+
+      <li style="font-size:12px;color:#334155;line-height:1.75;">
+        Sikimić, V. (2022). Specialty section: Research policy and strategic management. <em>Frontiers in Research Metrics and Analytics, 7</em>, 777781.
+        <a href="https://doi.org/10.3389/frma.2022.777781" target="_blank" style="color:#C8102E;text-decoration:none;font-weight:600;">https://doi.org/10.3389/frma.2022.777781</a>
+      </li>
+
+      <li style="font-size:12px;color:#334155;line-height:1.75;">
+        Tijssen, R. (2020). Re-valuing research excellence: From excellentism to responsible assessment. In <em>Transforming Research Excellence</em> (pp. 59–74).
+      </li>
+
+      <li style="font-size:12px;color:#334155;line-height:1.75;">
+        Tilley, H., Ball, L., &amp; Cassidy, C. (2018). <em>Research Excellence Framework (REF) impact toolkit.</em> Overseas Development Institute (ODI).
+      </li>
+
+      <li style="font-size:12px;color:#334155;line-height:1.75;">
+        Vertesy, K., &amp; Tarantola, S. (2012). <em>Research excellence: Deliverable of the third work package (WP3) of the feasibility study 'ERA MONITORING'</em> (JRC72592; EUR 25488 EN). Publications Office of the European Union.
+        <a href="https://doi.org/10.2788/45492" target="_blank" style="color:#C8102E;text-decoration:none;font-weight:600;">https://doi.org/10.2788/45492</a>
+      </li>
+
+    </ol>
+  </div>
+
+</div>
+
+<!-- ─── FOOTER NOTE ─── -->
+<div style="text-align:center; margin-top:48px; font-size:11px; color:#94a3b8; line-height:1.7;">
+  Scores are indicative and subject to formal Faculty Policy review. &nbsp;·&nbsp; FRIP incentives TBD. &nbsp;·&nbsp; Dashboard data is illustrative.<br>
+  UPF-BSM · Scholarly Research Impact Matrix (SRIM) · Research 4 Impact Initiative
+</div>
+
+</body>
+</html>
