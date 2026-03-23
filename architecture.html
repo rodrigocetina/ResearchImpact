@@ -1,0 +1,820 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Technical Architecture · UPF-BSM SRIM</title>
+<style>
+  @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&family=JetBrains+Mono:wght@400;600&display=swap');
+
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+
+  body {
+    font-family: 'Inter', sans-serif;
+    background: #f0f4f8;
+    color: #1e293b;
+    min-height: 100vh;
+    padding: 40px 24px 80px;
+  }
+
+  /* ─── HEADER ─── */
+  .page-header { text-align: center; margin-bottom: 48px; }
+  .page-header .eyebrow { font-size: 11px; font-weight: 800; letter-spacing: .18em; text-transform: uppercase; color: #C8102E; margin-bottom: 8px; }
+  .page-header h1 { font-size: 28px; font-weight: 900; color: #0f172a; margin-bottom: 8px; }
+  .page-header p { font-size: 13px; color: #64748b; max-width: 620px; margin: 0 auto; line-height: 1.65; }
+
+  /* ─── MAIN LAYOUT ─── */
+  .arch-canvas {
+    max-width: 1080px;
+    margin: 0 auto;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 0;
+  }
+
+  /* ─── LAYER LABELS ─── */
+  .layer-label {
+    font-size: 9.5px; font-weight: 900; letter-spacing: .18em; text-transform: uppercase;
+    padding: 3px 12px; border-radius: 999px; margin-bottom: 10px; align-self: flex-start;
+  }
+  .l-client   { background: #dbeafe; color: #1d4ed8; }
+  .l-auth     { background: #ede9fe; color: #6d28d9; }
+  .l-api      { background: #d1fae5; color: #065f46; }
+  .l-db       { background: #fef3c7; color: #92400e; }
+  .l-dash     { background: #fce7f3; color: #9d174d; }
+
+  /* ─── ARROWS ─── */
+  .arrow { display: flex; flex-direction: column; align-items: center; margin: 2px 0; }
+  .arrow-line { width: 2px; height: 28px; background: linear-gradient(to bottom, #94a3b8, #64748b); }
+  .arrow-head { width: 0; height: 0; border-left: 7px solid transparent; border-right: 7px solid transparent; border-top: 10px solid #64748b; }
+  .arrow-label { font-size: 9.5px; font-weight: 700; color: #94a3b8; letter-spacing: .06em; text-transform: uppercase; margin-bottom: 2px; }
+
+  .arrow-dual { display: flex; align-items: center; justify-content: center; gap: 6px; margin: 4px 0; }
+  .arrow-dual .label { font-size: 10px; font-weight: 700; color: #64748b; text-align: center; line-height: 1.4; }
+  .arrow-dual .line-wrap { display: flex; flex-direction: column; align-items: center; }
+  .arrow-dual .ah-up   { width: 0; height: 0; border-left: 6px solid transparent; border-right: 6px solid transparent; border-bottom: 9px solid #94a3b8; }
+  .arrow-dual .ah-down { width: 0; height: 0; border-left: 6px solid transparent; border-right: 6px solid transparent; border-top: 9px solid #94a3b8; margin-top: 2px; }
+  .arrow-dual .v-line  { width: 2px; height: 20px; background: #cbd5e1; }
+
+  /* ─── NODE BASE ─── */
+  .node { border-radius: 14px; padding: 16px 20px; width: 100%; max-width: 760px; }
+
+  /* START / END pills */
+  .node-pill {
+    border-radius: 999px; padding: 14px 40px; text-align: center;
+    max-width: 360px;
+  }
+  .node-pill.start { background: linear-gradient(135deg,#1e3a5f,#0f172a); color: white; box-shadow: 0 4px 20px rgba(15,23,42,.25); }
+  .node-pill.end   { background: linear-gradient(135deg,#C8102E,#7f1d1d); color: white; box-shadow: 0 4px 20px rgba(200,16,46,.3); }
+  .node-pill .label { font-size: 13px; font-weight: 800; }
+  .node-pill .sub   { font-size: 11px; opacity: .65; margin-top: 3px; }
+
+  /* PROCESS nodes */
+  .node-proc { background: white; border: 1.5px solid #e2e8f0; box-shadow: 0 2px 10px rgba(0,0,0,.05); }
+  .node-proc .nt { font-size: 13px; font-weight: 800; color: #0f172a; margin-bottom: 4px; }
+  .node-proc .nd { font-size: 12px; color: #64748b; line-height: 1.55; }
+
+  /* TECH STACK node — wide card with columns */
+  .tech-card {
+    background: white; border: 1.5px solid #e2e8f0; border-radius: 16px;
+    padding: 20px 24px; width: 100%; max-width: 900px;
+    box-shadow: 0 2px 12px rgba(0,0,0,.06);
+  }
+  .tech-card .tc-title {
+    font-size: 11px; font-weight: 800; letter-spacing: .14em; text-transform: uppercase;
+    color: #94a3b8; margin-bottom: 16px;
+  }
+  .tech-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 12px; }
+  .tech-box {
+    border-radius: 12px; padding: 14px;
+  }
+  .tb-client  { background: #eff6ff; border: 1.5px solid #bfdbfe; }
+  .tb-server  { background: #f0fdf4; border: 1.5px solid #bbf7d0; }
+  .tb-db      { background: #fffbeb; border: 1.5px solid #fde68a; }
+  .tech-box .tb-icon  { font-size: 20px; margin-bottom: 6px; }
+  .tech-box .tb-head  { font-size: 11.5px; font-weight: 800; color: #0f172a; margin-bottom: 4px; }
+  .tech-box .tb-stack { font-size: 10.5px; color: #64748b; line-height: 1.6; }
+  .tech-box .tb-stack code {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 10px; font-weight: 600;
+    background: rgba(0,0,0,.06); padding: 1px 5px; border-radius: 4px;
+  }
+
+  /* DB SCHEMA card */
+  .schema-card {
+    background: white; border: 1.5px solid #e2e8f0; border-radius: 16px;
+    padding: 20px 24px; width: 100%; max-width: 900px;
+    box-shadow: 0 2px 12px rgba(0,0,0,.06);
+  }
+  .schema-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 12px; margin-top: 14px; }
+  .schema-table {
+    border-radius: 10px; border: 1.5px solid #e2e8f0; overflow: hidden;
+  }
+  .schema-table .st-head {
+    padding: 8px 12px; font-size: 10.5px; font-weight: 800; letter-spacing: .08em;
+    text-transform: uppercase; border-bottom: 1.5px solid #e2e8f0;
+  }
+  .st-faculty .st-head { background: #eff6ff; color: #1d4ed8; }
+  .st-subs    .st-head { background: #f0fdf4; color: #15803d; }
+  .st-scores  .st-head { background: #fffbeb; color: #92400e; }
+  .schema-table .st-body { padding: 8px 12px; }
+  .schema-table .st-row {
+    display: flex; align-items: baseline; gap: 6px;
+    padding: 3px 0; border-bottom: 1px solid #f8fafc; font-size: 10.5px;
+  }
+  .schema-table .st-row:last-child { border-bottom: none; }
+  .schema-table .st-row .col-name { font-family: 'JetBrains Mono', monospace; font-weight: 600; color: #0f172a; font-size: 10px; min-width: 110px; }
+  .schema-table .st-row .col-type { font-size: 9.5px; color: #94a3b8; font-family: 'JetBrains Mono', monospace; }
+  .schema-table .st-row .pk  { font-size: 8.5px; background: #C8102E; color: white; padding: 1px 5px; border-radius: 3px; font-weight: 800; }
+  .schema-table .st-row .fk  { font-size: 8.5px; background: #1d4ed8; color: white; padding: 1px 5px; border-radius: 3px; font-weight: 800; }
+
+  /* API ENDPOINTS card */
+  .api-card {
+    background: white; border: 1.5px solid #e2e8f0; border-radius: 16px;
+    padding: 20px 24px; width: 100%; max-width: 900px;
+    box-shadow: 0 2px 12px rgba(0,0,0,.06);
+  }
+  .api-rows { display: flex; flex-direction: column; gap: 8px; margin-top: 14px; }
+  .api-row {
+    display: flex; align-items: center; gap: 12px;
+    background: #f8fafc; border-radius: 8px; padding: 9px 14px;
+    border: 1px solid #e2e8f0;
+  }
+  .api-method {
+    font-family: 'JetBrains Mono', monospace; font-size: 9.5px; font-weight: 800;
+    padding: 3px 8px; border-radius: 5px; flex-shrink: 0; min-width: 44px; text-align: center;
+  }
+  .m-post { background: #d1fae5; color: #065f46; }
+  .m-get  { background: #dbeafe; color: #1d4ed8; }
+  .api-path { font-family: 'JetBrains Mono', monospace; font-size: 10.5px; font-weight: 600; color: #0f172a; min-width: 240px; }
+  .api-desc { font-size: 11px; color: #64748b; flex: 1; }
+
+  /* FLOW DECISION diamond */
+  .diamond-wrap { display: flex; justify-content: center; width: 100%; max-width: 760px; }
+  .diamond { position: relative; width: 200px; height: 76px; display: flex; align-items: center; justify-content: center; flex-shrink: 0; }
+  .diamond::before { content: ''; position: absolute; inset: 0; background: #fffbeb; border: 2px solid #f59e0b; transform: rotate(45deg) scale(.70); border-radius: 5px; }
+  .diamond .dt { position: relative; font-size: 11px; font-weight: 800; color: #92400e; text-align: center; line-height: 1.3; z-index: 1; padding: 0 10px; }
+
+  .diamond-branches { display: flex; gap: 20px; width: 100%; max-width: 760px; }
+  .diamond-branch { flex: 1; display: flex; flex-direction: column; align-items: center; gap: 0; }
+  .branch-label { font-size: 9.5px; font-weight: 800; text-transform: uppercase; letter-spacing: .1em; padding: 3px 10px; border-radius: 999px; margin-bottom: 8px; }
+  .b-yes { background: #d1fae5; color: #065f46; }
+  .b-no  { background: #fee2e2; color: #991b1b; }
+  .branch-node {
+    background: white; border-radius: 10px; padding: 11px 14px;
+    font-size: 11px; font-weight: 600; color: #1e293b;
+    border: 1.5px solid #e2e8f0; text-align: center;
+    line-height: 1.45; width: 100%;
+    box-shadow: 0 1px 5px rgba(0,0,0,.05);
+  }
+
+  /* DASHBOARD OUTPUT card */
+  .dash-card {
+    background: white; border: 1.5px solid #e2e8f0; border-radius: 16px;
+    padding: 20px 24px; width: 100%; max-width: 900px;
+    box-shadow: 0 2px 12px rgba(0,0,0,.06);
+  }
+  .dash-grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 10px; margin-top: 14px; }
+  .dash-box {
+    border-radius: 10px; padding: 12px; text-align: center;
+  }
+  .dash-box .d-icon  { font-size: 20px; margin-bottom: 5px; }
+  .dash-box .d-title { font-size: 11px; font-weight: 800; color: #0f172a; margin-bottom: 3px; }
+  .dash-box .d-desc  { font-size: 10px; color: #64748b; line-height: 1.4; }
+  .db-1 { background: #eff6ff; border: 1.5px solid #bfdbfe; }
+  .db-2 { background: #f0fdf4; border: 1.5px solid #bbf7d0; }
+  .db-3 { background: #fef3c7; border: 1.5px solid #fde68a; }
+  .db-4 { background: linear-gradient(135deg,#fff1f2,#fce7f3); border: 1.5px solid #fda4af; }
+
+  /* HOSTING card */
+  .hosting-card {
+    background: linear-gradient(135deg,#0f172a,#1e3a5f);
+    border-radius: 16px; padding: 22px 28px;
+    width: 100%; max-width: 900px;
+    display: grid; grid-template-columns: repeat(3, 1fr); gap: 20px;
+  }
+  .h-box .h-icon  { font-size: 22px; margin-bottom: 6px; }
+  .h-box .h-label { font-size: 9.5px; font-weight: 800; letter-spacing: .14em; text-transform: uppercase; color: #94a3b8; margin-bottom: 5px; }
+  .h-box .h-val   { font-size: 13px; font-weight: 700; color: white; line-height: 1.45; }
+  .h-box .h-sub   { font-size: 10.5px; color: #64748b; margin-top: 4px; line-height: 1.4; }
+
+  /* Connectors between wide cards */
+  .wide-arrow { display: flex; flex-direction: column; align-items: center; margin: 2px 0; }
+
+  /* Cost strip */
+  .cost-strip {
+    background: white; border: 1.5px solid #e2e8f0; border-radius: 14px;
+    padding: 16px 24px; width: 100%; max-width: 900px;
+    display: flex; gap: 0; overflow: hidden;
+    box-shadow: 0 2px 10px rgba(0,0,0,.05);
+  }
+  .cost-item { flex: 1; text-align: center; padding: 8px 12px; border-right: 1px solid #f1f5f9; }
+  .cost-item:last-child { border-right: none; }
+  .cost-item .ci-label { font-size: 9.5px; font-weight: 700; text-transform: uppercase; letter-spacing: .08em; color: #94a3b8; margin-bottom: 4px; }
+  .cost-item .ci-val   { font-size: 15px; font-weight: 900; color: #0f172a; }
+  .cost-item .ci-note  { font-size: 10px; color: #94a3b8; margin-top: 3px; }
+
+  .section-eyebrow {
+    font-size: 10px; font-weight: 800; letter-spacing: .16em; text-transform: uppercase;
+    color: #94a3b8; align-self: flex-start; width: 100%; max-width: 900px;
+    margin-bottom: -2px;
+  }
+
+  @media (max-width: 680px) {
+    .tech-grid, .schema-grid, .dash-grid, .hosting-card { grid-template-columns: 1fr; }
+    .diamond-branches { flex-direction: column; }
+    .cost-strip { flex-wrap: wrap; }
+  }
+
+    /* ── Tool nav toggle ── */
+    .tool-nav {
+      position: sticky;
+      top: 0;
+      z-index: 40;
+      background: #fff;
+      border-bottom: 1.5px solid #e2e8f0;
+      box-shadow: 0 1px 6px rgba(0,0,0,.06);
+    }
+    .tool-nav-inner {
+      max-width: 72rem;
+      margin: 0 auto;
+      padding: 0 1.5rem;
+      display: flex;
+      gap: 4px;
+      align-items: center;
+      height: 44px;
+    }
+    .nav-btn {
+      display: inline-flex;
+      align-items: center;
+      padding: 5px 14px;
+      border-radius: 8px;
+      font-size: 12px;
+      font-weight: 700;
+      color: #64748b;
+      text-decoration: none;
+      border: 1.5px solid transparent;
+      -webkit-transition: all 0.15s;
+      transition: all 0.15s;
+      white-space: nowrap;
+    }
+    .nav-btn:hover { background: #f1f5f9; color: #0f172a; border-color: #e2e8f0; }
+    .nav-btn-active { background: #fff1f2; color: #C8102E; border-color: #fecdd3; }
+    .nav-btn-active:hover { background: #ffe4e6; color: #C8102E; }
+    @media print { .tool-nav { display: none !important; } }
+  </style>
+</head>
+<body>
+<!-- ── TOOL NAV TOGGLE ── -->
+<nav class="tool-nav no-print" role="navigation" aria-label="Tool navigation">
+  <div class="tool-nav-inner">
+    <a href="index.html" class="nav-btn">Excellence Matrix</a>
+    <a href="srim-reporting-tool.html" class="nav-btn">SRIM Self-Report</a>
+    <a href="srim-flowchart.html" class="nav-btn">Flowchart</a>
+    <a href="architecture.html" class="nav-btn nav-btn-active" aria-current="page">Architecture</a>
+  </div>
+</nav>
+
+
+<!-- HEADER -->
+<div class="page-header">
+  <div class="eyebrow">UPF-BSM SRIM · Build Strategy</div>
+  <h1>Technical Architecture</h1>
+  <p>FastAPI backend + PostgreSQL (Supabase) · How faculty input flows through the system, gets scored, stored, and surfaces in the school-wide dashboard.</p>
+</div>
+
+<div class="arch-canvas">
+
+  <!-- ① FACULTY / CLIENT LAYER -->
+  <div class="node-pill start">
+    <div class="label">Faculty Member opens SRIM Tool</div>
+    <div class="sub">Browser · Existing HTML frontend</div>
+  </div>
+
+  <div class="arrow"><div class="arrow-line"></div><div class="arrow-head"></div></div>
+
+  <!-- AUTH -->
+  <div class="layer-label l-auth">① Authentication</div>
+  <div class="node node-proc" style="max-width:760px;">
+    <div class="nt">Supabase Auth — Login / Session</div>
+    <div class="nd">
+      Faculty log in via <strong>email + password</strong> or <strong>institutional SSO (SAML/OAuth)</strong>. Supabase returns a signed <strong>JWT token</strong> stored in the browser.
+      Every subsequent API call carries this token in the <code style="font-family:monospace;font-size:11px;background:#f1f5f9;padding:1px 5px;border-radius:4px;">Authorization</code> header — the server validates it before touching any data.
+      <br><br>
+      <strong>Row-level security:</strong> faculty can only read/write their own submissions. Admins (Research Office) see all records.
+    </div>
+  </div>
+
+  <div class="arrow-dual">
+    <div class="line-wrap">
+      <div class="ah-up"></div>
+      <div class="v-line"></div>
+      <div class="ah-down"></div>
+    </div>
+    <div class="label">JWT<br>Token</div>
+  </div>
+
+  <!-- API LAYER -->
+  <div class="layer-label l-api">② API Layer — FastAPI (Python)</div>
+  <div class="api-card" style="max-width:760px;">
+    <div style="font-size:11px;font-weight:800;letter-spacing:.14em;text-transform:uppercase;color:#94a3b8;">REST Endpoints</div>
+    <div class="api-rows">
+      <div class="api-row">
+        <div class="api-method m-post">POST</div>
+        <div class="api-path">/submit</div>
+        <div class="api-desc">Receives faculty form data, runs SRIM scoring engine server-side, stores result in DB</div>
+      </div>
+      <div class="api-row">
+        <div class="api-method m-get">GET</div>
+        <div class="api-path">/my-score</div>
+        <div class="api-desc">Returns the authenticated faculty member's own scores &amp; submission history</div>
+      </div>
+      <div class="api-row">
+        <div class="api-method m-get">GET</div>
+        <div class="api-path">/dashboard/school</div>
+        <div class="api-desc">Aggregated KPIs, benchmark distribution, dimension averages — Research Office only</div>
+      </div>
+      <div class="api-row">
+        <div class="api-method m-get">GET</div>
+        <div class="api-path">/dashboard/department/{id}</div>
+        <div class="api-desc">Per-department averages, Stage 2 adoption rate, top performers — Dept. Heads only</div>
+      </div>
+      <div class="api-row">
+        <div class="api-method m-get">GET</div>
+        <div class="api-path">/dashboard/trend</div>
+        <div class="api-desc">Year-over-year score trajectory for the whole school</div>
+      </div>
+    </div>
+  </div>
+
+  <div class="arrow"><div class="arrow-line"></div><div class="arrow-head"></div></div>
+
+  <!-- SCORING ENGINE -->
+  <div class="layer-label l-api" style="background:#dcfce7;color:#166534;">③ Scoring Engine (server-side)</div>
+  <div class="node node-proc" style="max-width:760px;">
+    <div class="nt">Python Scoring Module — Trusted Calculation</div>
+    <div class="nd">
+      The same logic from the JS frontend is re-implemented in Python so <strong>scores cannot be manipulated client-side</strong>.
+      Runs on every <code style="font-family:monospace;font-size:11px;background:#f1f5f9;padding:1px 5px;border-radius:4px;">POST /submit</code>:
+      <br><br>
+      <strong>Step 1</strong> — Count S1 instances per dimension → cap at 70 pts &nbsp;·&nbsp;
+      <strong>Step 2</strong> — Count S2 instances → cap combined at 120 pts &nbsp;·&nbsp;
+      <strong>Step 3</strong> — Apply funding multiplier (Dims 2 &amp; 3) based on direct income &nbsp;·&nbsp;
+      <strong>Step 4</strong> — Sum 5 dimension scores &nbsp;·&nbsp;
+      <strong>Step 5</strong> — Apply ×1.5 Holistic Bonus if 4+ dims at S2 &nbsp;·&nbsp;
+      <strong>Step 6</strong> — Cap at 1,000 pts &nbsp;·&nbsp;
+      <strong>Step 7</strong> — Write final score + breakdown to DB
+    </div>
+  </div>
+
+  <div class="arrow-dual">
+    <div class="line-wrap">
+      <div class="ah-up"></div>
+      <div class="v-line"></div>
+      <div class="ah-down"></div>
+    </div>
+    <div class="label">Read &amp;<br>Write</div>
+  </div>
+
+  <!-- DATABASE LAYER -->
+  <div class="layer-label l-db">④ Database — PostgreSQL via Supabase</div>
+  <div class="schema-card" style="max-width:760px;">
+    <div style="font-size:11px;font-weight:800;letter-spacing:.14em;text-transform:uppercase;color:#94a3b8;">Core Table Schema</div>
+    <div class="schema-grid" style="grid-template-columns:repeat(3,1fr);">
+
+      <!-- faculty_profiles -->
+      <div class="schema-table st-faculty">
+        <div class="st-head">faculty_profiles</div>
+        <div class="st-body">
+          <div class="st-row"><span class="pk">PK</span><span class="col-name">id</span><span class="col-type">uuid</span></div>
+          <div class="st-row"><span class="col-name" style="padding-left:20px">name</span><span class="col-type">text</span></div>
+          <div class="st-row"><span class="col-name" style="padding-left:20px">email</span><span class="col-type">text</span></div>
+          <div class="st-row"><span class="col-name" style="padding-left:20px">department</span><span class="col-type">text</span></div>
+          <div class="st-row"><span class="col-name" style="padding-left:20px">position</span><span class="col-type">text</span></div>
+          <div class="st-row"><span class="col-name" style="padding-left:20px">role</span><span class="col-type">text</span></div>
+          <div class="st-row"><span class="col-name" style="padding-left:20px">created_at</span><span class="col-type">timestamptz</span></div>
+        </div>
+      </div>
+
+      <!-- submissions -->
+      <div class="schema-table st-subs">
+        <div class="st-head">submissions</div>
+        <div class="st-body">
+          <div class="st-row"><span class="pk">PK</span><span class="col-name">id</span><span class="col-type">uuid</span></div>
+          <div class="st-row"><span class="fk">FK</span><span class="col-name">faculty_id</span><span class="col-type">uuid</span></div>
+          <div class="st-row"><span class="col-name" style="padding-left:20px">academic_year</span><span class="col-type">text</span></div>
+          <div class="st-row"><span class="col-name" style="padding-left:20px">raw_input</span><span class="col-type">jsonb</span></div>
+          <div class="st-row"><span class="col-name" style="padding-left:20px">evidence_notes</span><span class="col-type">text</span></div>
+          <div class="st-row"><span class="col-name" style="padding-left:20px">submitted_at</span><span class="col-type">timestamptz</span></div>
+          <div class="st-row"><span class="col-name" style="padding-left:20px">status</span><span class="col-type">text</span></div>
+        </div>
+      </div>
+
+      <!-- scores -->
+      <div class="schema-table st-scores">
+        <div class="st-head">scores</div>
+        <div class="st-body">
+          <div class="st-row"><span class="pk">PK</span><span class="col-name">id</span><span class="col-type">uuid</span></div>
+          <div class="st-row"><span class="fk">FK</span><span class="col-name">submission_id</span><span class="col-type">uuid</span></div>
+          <div class="st-row"><span class="col-name" style="padding-left:20px">dim1_score</span><span class="col-type">numeric</span></div>
+          <div class="st-row"><span class="col-name" style="padding-left:20px">dim2_score</span><span class="col-type">numeric</span></div>
+          <div class="st-row"><span class="col-name" style="padding-left:20px">dim3_score</span><span class="col-type">numeric</span></div>
+          <div class="st-row"><span class="col-name" style="padding-left:20px">dim4_score</span><span class="col-type">numeric</span></div>
+          <div class="st-row"><span class="col-name" style="padding-left:20px">dim5_score</span><span class="col-type">numeric</span></div>
+          <div class="st-row"><span class="col-name" style="padding-left:20px">holistic_bonus</span><span class="col-type">boolean</span></div>
+          <div class="st-row"><span class="col-name" style="padding-left:20px">total_score</span><span class="col-type">numeric</span></div>
+          <div class="st-row"><span class="col-name" style="padding-left:20px">benchmark</span><span class="col-type">text</span></div>
+        </div>
+      </div>
+
+    </div>
+    <div style="margin-top:12px;background:#f8fafc;border:1px dashed #cbd5e1;border-radius:8px;padding:10px 14px;font-size:11px;color:#475569;line-height:1.6;">
+      <strong>raw_input</strong> stored as <code style="font-family:monospace;font-size:10.5px;background:#e2e8f0;padding:1px 5px;border-radius:3px;">jsonb</code> — captures every activity instance exactly as submitted, so scores can be audited or recalculated if the rubric changes. <strong>Row-level security</strong> enforced at the Supabase level: faculty rows visible only to the submitter and admins.
+    </div>
+  </div>
+
+  <div class="arrow-dual">
+    <div class="line-wrap">
+      <div class="ah-up"></div>
+      <div class="v-line"></div>
+      <div class="ah-down"></div>
+    </div>
+    <div class="label">SQL<br>Queries</div>
+  </div>
+
+  <!-- DASHBOARD LAYER -->
+  <div class="layer-label l-dash">⑤ Dashboard Layer</div>
+  <div class="node node-proc" style="max-width:760px;">
+    <div class="nt">Aggregation Queries → Frontend Dashboard Pages</div>
+    <div class="nd">
+      The existing dashboard HTML (from the flowchart) fetches from the API endpoints above and renders with <strong>Chart.js</strong> (already loaded in your files).
+      No rebuild needed — just swap static illustrative data for <code style="font-family:monospace;font-size:11px;background:#f1f5f9;padding:1px 5px;border-radius:4px;">fetch('/dashboard/school')</code> calls.
+    </div>
+  </div>
+
+  <div class="arrow"><div class="arrow-line"></div><div class="arrow-head"></div></div>
+
+  <div class="dash-card" style="max-width:760px;">
+    <div style="font-size:11px;font-weight:800;letter-spacing:.14em;text-transform:uppercase;color:#94a3b8;">Four Dashboard Views Populated</div>
+    <div class="dash-grid">
+      <div class="dash-box db-1">
+        <div class="d-icon">👤</div>
+        <div class="d-title">My Score</div>
+        <div class="d-desc">Faculty see only their own breakdown, benchmark tier, and year-over-year trend</div>
+      </div>
+      <div class="dash-box db-2">
+        <div class="d-icon">🏛️</div>
+        <div class="d-title">Department</div>
+        <div class="d-desc">Dept. Head sees avg score, Stage 2 rate, and dimension heatmap for their team</div>
+      </div>
+      <div class="dash-box db-3">
+        <div class="d-icon">📊</div>
+        <div class="d-title">School-Wide</div>
+        <div class="d-desc">Research Office sees the full KPI strip, benchmark distribution, and trends</div>
+      </div>
+      <div class="dash-box db-4">
+        <div class="d-icon">📈</div>
+        <div class="d-title">Year-over-Year</div>
+        <div class="d-desc">Multi-year trajectory of avg score, Stage 2 adoption, and funded income growth</div>
+      </div>
+    </div>
+  </div>
+
+  <div class="arrow"><div class="arrow-line"></div><div class="arrow-head"></div></div>
+
+  <!-- TECH STACK SUMMARY -->
+  <div class="section-eyebrow" style="margin-top:8px;">Full Stack Summary</div>
+  <div class="tech-card">
+    <div class="tc-title">Technology Choices — Option 2</div>
+    <div class="tech-grid">
+      <div class="tech-box tb-client">
+        <div class="tb-icon">🌐</div>
+        <div class="tb-head">Frontend (Client)</div>
+        <div class="tb-stack">
+          Your existing <strong>HTML + Tailwind + JS</strong> files — no rebuild needed.<br><br>
+          Add <code>@supabase/supabase-js</code> (CDN) for auth &amp; API calls.<br><br>
+          Charts via <code>Chart.js</code> already loaded.
+        </div>
+      </div>
+      <div class="tech-box tb-server">
+        <div class="tb-icon">⚙️</div>
+        <div class="tb-head">Backend (Server)</div>
+        <div class="tb-stack">
+          <code>FastAPI</code> (Python) — fast, typed, auto-generates API docs.<br><br>
+          Scoring module mirrors your existing JS logic.<br><br>
+          Hosted on <code>Render</code> or <code>Railway</code> (free tier available).<br><br>
+          JWT validation via <code>python-jose</code>.
+        </div>
+      </div>
+      <div class="tech-box tb-db">
+        <div class="tb-icon">🗄️</div>
+        <div class="tb-head">Database &amp; Auth</div>
+        <div class="tb-stack">
+          <code>Supabase</code> — hosted PostgreSQL + Auth + Row-Level Security.<br><br>
+          Free tier: 500 MB DB, 50k rows, 50k monthly active users.<br><br>
+          Dashboard queries via <code>pg views</code> or <code>PostgREST</code> directly.
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div class="arrow"><div class="arrow-line"></div><div class="arrow-head"></div></div>
+
+  <!-- HOSTING -->
+  <div class="hosting-card">
+    <div class="h-box">
+      <div class="h-icon">🚀</div>
+      <div class="h-label">Frontend hosting</div>
+      <div class="h-val">GitHub Pages or Vercel</div>
+      <div class="h-sub">Your existing HTML files deployed directly from the GitHub repo you're already building. Zero configuration.</div>
+    </div>
+    <div class="h-box">
+      <div class="h-icon">⚙️</div>
+      <div class="h-label">API hosting</div>
+      <div class="h-val">Render (free tier)</div>
+      <div class="h-sub">FastAPI app deployed from a GitHub repo. Auto-deploys on push. Scales up when needed. ~$7/mo for always-on.</div>
+    </div>
+    <div class="h-box">
+      <div class="h-icon">🗄️</div>
+      <div class="h-label">DB &amp; Auth</div>
+      <div class="h-val">Supabase (free tier)</div>
+      <div class="h-sub">Managed PostgreSQL + Auth. Dashboard, row-level security, and API all included. No DevOps needed.</div>
+    </div>
+  </div>
+
+  <div class="arrow"><div class="arrow-line"></div><div class="arrow-head"></div></div>
+
+  <!-- COST -->
+  <div class="section-eyebrow">Estimated Running Cost (early stage)</div>
+  <div class="cost-strip">
+    <div class="cost-item">
+      <div class="ci-label">Frontend</div>
+      <div class="ci-val">€0</div>
+      <div class="ci-note">GitHub Pages / Vercel free</div>
+    </div>
+    <div class="cost-item">
+      <div class="ci-label">API (sleep)</div>
+      <div class="ci-val">€0</div>
+      <div class="ci-note">Render free tier (spins down)</div>
+    </div>
+    <div class="cost-item">
+      <div class="ci-label">API (always-on)</div>
+      <div class="ci-val">~€7/mo</div>
+      <div class="ci-note">Render starter plan</div>
+    </div>
+    <div class="cost-item">
+      <div class="ci-label">Database</div>
+      <div class="ci-val">€0</div>
+      <div class="ci-note">Supabase free (≤50k rows)</div>
+    </div>
+    <div class="cost-item">
+      <div class="ci-label">Auth</div>
+      <div class="ci-val">€0</div>
+      <div class="ci-note">Supabase free (≤50k MAU)</div>
+    </div>
+    <div class="cost-item" style="background:#fff1f2;border-radius:8px;">
+      <div class="ci-label">Total MVP</div>
+      <div class="ci-val" style="color:#C8102E;">€0–7/mo</div>
+      <div class="ci-note">Scales only when needed</div>
+    </div>
+  </div>
+
+  <div class="arrow"><div class="arrow-line"></div><div class="arrow-head"></div></div>
+
+  <!-- END -->
+  <div class="node-pill end">
+    <div class="label">Full SRIM system live</div>
+    <div class="sub">Secure · Auditable · School-wide visibility</div>
+  </div>
+
+</div><!-- /arch-canvas -->
+
+<!-- MIGRATION PATH NOTE -->
+<div style="max-width:760px;margin:48px auto 0;background:white;border:1.5px solid #e2e8f0;border-radius:16px;padding:22px 28px;box-shadow:0 2px 10px rgba(0,0,0,.05);">
+  <div style="font-size:10px;font-weight:800;letter-spacing:.16em;text-transform:uppercase;color:#94a3b8;margin-bottom:10px;">Migration Path from Current Static Files</div>
+  <div style="display:flex;flex-direction:column;gap:8px;">
+    <div style="display:flex;gap:12px;align-items:flex-start;">
+      <div style="background:#C8102E;color:white;font-size:10px;font-weight:800;padding:3px 8px;border-radius:999px;flex-shrink:0;margin-top:1px;">1</div>
+      <div style="font-size:12px;color:#334155;line-height:1.55;"><strong>Create Supabase project</strong> — 10 minutes. Set up <code style="font-family:monospace;background:#f1f5f9;padding:1px 5px;border-radius:3px;font-size:11px;">faculty_profiles</code>, <code style="font-family:monospace;background:#f1f5f9;padding:1px 5px;border-radius:3px;font-size:11px;">submissions</code>, <code style="font-family:monospace;background:#f1f5f9;padding:1px 5px;border-radius:3px;font-size:11px;">scores</code> tables. Enable Auth.</div>
+    </div>
+    <div style="display:flex;gap:12px;align-items:flex-start;">
+      <div style="background:#C8102E;color:white;font-size:10px;font-weight:800;padding:3px 8px;border-radius:999px;flex-shrink:0;margin-top:1px;">2</div>
+      <div style="font-size:12px;color:#334155;line-height:1.55;"><strong>Write FastAPI scoring module</strong> — translate existing JS scoring logic to Python. ~200 lines. Add POST /submit and GET /my-score endpoints.</div>
+    </div>
+    <div style="display:flex;gap:12px;align-items:flex-start;">
+      <div style="background:#C8102E;color:white;font-size:10px;font-weight:800;padding:3px 8px;border-radius:999px;flex-shrink:0;margin-top:1px;">3</div>
+      <div style="font-size:12px;color:#334155;line-height:1.55;"><strong>Update SRIM HTML form</strong> — replace local score calculation with a <code style="font-family:monospace;background:#f1f5f9;padding:1px 5px;border-radius:3px;font-size:11px;">fetch()</code> POST to the API. Add Supabase login widget.</div>
+    </div>
+    <div style="display:flex;gap:12px;align-items:flex-start;">
+      <div style="background:#C8102E;color:white;font-size:10px;font-weight:800;padding:3px 8px;border-radius:999px;flex-shrink:0;margin-top:1px;">4</div>
+      <div style="font-size:12px;color:#334155;line-height:1.55;"><strong>Build dashboard page</strong> — new <code style="font-family:monospace;background:#f1f5f9;padding:1px 5px;border-radius:3px;font-size:11px;">dashboard.html</code> fetches from GET /dashboard/school and renders the charts already mocked in the flowchart.</div>
+    </div>
+    <div style="display:flex;gap:12px;align-items:flex-start;">
+      <div style="background:#C8102E;color:white;font-size:10px;font-weight:800;padding:3px 8px;border-radius:999px;flex-shrink:0;margin-top:1px;">5</div>
+      <div style="font-size:12px;color:#334155;line-height:1.55;"><strong>Deploy</strong> — push frontend to GitHub Pages, API to Render, DB stays on Supabase. Done.</div>
+    </div>
+  </div>
+</div>
+
+<!-- ═══════════════════════════════════════════════════════════════
+     GDPR & CYBERSECURITY COMPLIANCE
+═══════════════════════════════════════════════════════════════ -->
+<div style="max-width:900px;margin:60px auto 0;border-top:2px solid #e2e8f0;padding-top:48px;">
+
+  <div style="text-align:center;margin-bottom:32px;">
+    <div style="font-size:11px;font-weight:800;letter-spacing:.18em;text-transform:uppercase;color:#C8102E;margin-bottom:8px;">Compliance Considerations</div>
+    <h2 style="font-size:20px;font-weight:900;color:#0f172a;margin-bottom:8px;">GDPR &amp; Cybersecurity Compliance</h2>
+    <p style="font-size:12.5px;color:#64748b;max-width:580px;margin:0 auto;line-height:1.65;">
+      This architecture <em>can</em> meet GDPR and cybersecurity standards — but compliance is not automatic. It requires deliberate configuration and institutional sign-off.
+    </p>
+  </div>
+
+  <!-- ── ROW 1: What you get vs what you must build ── -->
+  <div style="display:grid;grid-template-columns:1fr 1fr;gap:16px;margin-bottom:16px;">
+
+    <!-- What the stack covers automatically -->
+    <div style="background:white;border-radius:14px;padding:22px 20px;border:1.5px solid #bbf7d0;box-shadow:0 2px 10px rgba(0,0,0,.05);">
+      <div style="font-size:10px;font-weight:800;letter-spacing:.14em;text-transform:uppercase;color:#15803d;margin-bottom:14px;">✅ Covered Out of the Box</div>
+      <div style="display:flex;flex-direction:column;gap:10px;">
+        <div style="display:flex;gap:10px;align-items:flex-start;font-size:11.5px;color:#334155;line-height:1.55;">
+          <span style="color:#15803d;font-weight:800;flex-shrink:0;">✓</span>
+          <span><strong>EU data residency</strong> — Supabase Frankfurt region (<code style="font-family:monospace;font-size:10px;background:#f0fdf4;padding:1px 5px;border-radius:3px;">eu-central-1</code>). Personal data never leaves the EU.</span>
+        </div>
+        <div style="display:flex;gap:10px;align-items:flex-start;font-size:11.5px;color:#334155;line-height:1.55;">
+          <span style="color:#15803d;font-weight:800;flex-shrink:0;">✓</span>
+          <span><strong>Encryption at rest</strong> — AES-256 on all Supabase storage. Encryption in transit — TLS 1.2+ enforced by default.</span>
+        </div>
+        <div style="display:flex;gap:10px;align-items:flex-start;font-size:11.5px;color:#334155;line-height:1.55;">
+          <span style="color:#15803d;font-weight:800;flex-shrink:0;">✓</span>
+          <span><strong>Data Processing Agreement (DPA)</strong> — Supabase publishes a GDPR-compliant DPA that UPF-BSM signs as the data controller.</span>
+        </div>
+        <div style="display:flex;gap:10px;align-items:flex-start;font-size:11.5px;color:#334155;line-height:1.55;">
+          <span style="color:#15803d;font-weight:800;flex-shrink:0;">✓</span>
+          <span><strong>Row-level security</strong> — faculty are structurally prevented from accessing each other's data at the database layer, not just in code.</span>
+        </div>
+        <div style="display:flex;gap:10px;align-items:flex-start;font-size:11.5px;color:#334155;line-height:1.55;">
+          <span style="color:#15803d;font-weight:800;flex-shrink:0;">✓</span>
+          <span><strong>HTTPS everywhere</strong> — enforced by Render and Supabase. No plain-text traffic possible.</span>
+        </div>
+        <div style="display:flex;gap:10px;align-items:flex-start;font-size:11.5px;color:#334155;line-height:1.55;">
+          <span style="color:#15803d;font-weight:800;flex-shrink:0;">✓</span>
+          <span><strong>JWT-based authentication</strong> — short-lived signed tokens mean stolen sessions expire quickly.</span>
+        </div>
+      </div>
+    </div>
+
+    <!-- What must be built deliberately -->
+    <div style="background:white;border-radius:14px;padding:22px 20px;border:1.5px solid #fecdd3;box-shadow:0 2px 10px rgba(0,0,0,.05);">
+      <div style="font-size:10px;font-weight:800;letter-spacing:.14em;text-transform:uppercase;color:#b91c1c;margin-bottom:14px;">⚠ Must Be Built Deliberately</div>
+      <div style="display:flex;flex-direction:column;gap:10px;">
+        <div style="display:flex;gap:10px;align-items:flex-start;font-size:11.5px;color:#334155;line-height:1.55;">
+          <span style="color:#d97706;font-weight:800;flex-shrink:0;">!</span>
+          <span><strong>Rate limiting &amp; brute-force protection</strong> — API endpoints need request throttling to prevent credential-stuffing attacks on the login flow.</span>
+        </div>
+        <div style="display:flex;gap:10px;align-items:flex-start;font-size:11.5px;color:#334155;line-height:1.55;">
+          <span style="color:#d97706;font-weight:800;flex-shrink:0;">!</span>
+          <span><strong>Security headers</strong> — CSP, HSTS, X-Frame-Options, and CSRF protection must be added explicitly to the FastAPI app.</span>
+        </div>
+        <div style="display:flex;gap:10px;align-items:flex-start;font-size:11.5px;color:#334155;line-height:1.55;">
+          <span style="color:#d97706;font-weight:800;flex-shrink:0;">!</span>
+          <span><strong>Secrets management</strong> — API keys and DB credentials must live in environment variables, never in source code. GitHub repo must be private.</span>
+        </div>
+        <div style="display:flex;gap:10px;align-items:flex-start;font-size:11.5px;color:#334155;line-height:1.55;">
+          <span style="color:#d97706;font-weight:800;flex-shrink:0;">!</span>
+          <span><strong>Input validation &amp; sanitisation</strong> — all form fields validated server-side before DB writes to prevent injection attacks.</span>
+        </div>
+        <div style="display:flex;gap:10px;align-items:flex-start;font-size:11.5px;color:#334155;line-height:1.55;">
+          <span style="color:#d97706;font-weight:800;flex-shrink:0;">!</span>
+          <span><strong>Audit logging</strong> — every submission, score change, and admin access should be logged with timestamp and user ID for accountability.</span>
+        </div>
+      </div>
+    </div>
+
+  </div>
+
+  <!-- ── ROW 2: GDPR obligations ── -->
+  <div style="background:white;border-radius:14px;padding:22px 20px;border:1.5px solid #e2e8f0;box-shadow:0 2px 10px rgba(0,0,0,.05);margin-bottom:16px;">
+    <div style="font-size:10px;font-weight:800;letter-spacing:.14em;text-transform:uppercase;color:#94a3b8;margin-bottom:16px;">GDPR Obligations — Technology Alone Is Not Enough</div>
+    <div style="display:grid;grid-template-columns:repeat(3,1fr);gap:12px;">
+
+      <div style="background:#f8fafc;border-radius:10px;padding:14px;border:1px solid #e2e8f0;">
+        <div style="font-size:12px;font-weight:800;color:#0f172a;margin-bottom:6px;">📋 Lawful Basis</div>
+        <div style="font-size:11px;color:#475569;line-height:1.6;">Processing staff performance data requires a documented lawful basis — typically <strong>legitimate interest</strong> or <strong>employment contract</strong>. This must be decided and recorded by UPF-BSM legal, not by the tool.</div>
+      </div>
+
+      <div style="background:#f8fafc;border-radius:10px;padding:14px;border:1px solid #e2e8f0;">
+        <div style="font-size:12px;font-weight:800;color:#0f172a;margin-bottom:6px;">📄 Privacy Notice</div>
+        <div style="font-size:11px;color:#475569;line-height:1.6;">Faculty must be informed at login: what data is collected, why, how long it's kept, who can see it, and how to exercise their rights (access, erasure, portability). A privacy notice must be linked from the tool.</div>
+      </div>
+
+      <div style="background:#f8fafc;border-radius:10px;padding:14px;border:1px solid #e2e8f0;">
+        <div style="font-size:12px;font-weight:800;color:#0f172a;margin-bottom:6px;">🔍 DPIA Required</div>
+        <div style="font-size:11px;color:#475569;line-height:1.6;">A <strong>Data Protection Impact Assessment</strong> is almost certainly required under GDPR Art. 35 — this tool constitutes systematic monitoring of employees. Must be completed before go-live.</div>
+      </div>
+
+      <div style="background:#f8fafc;border-radius:10px;padding:14px;border:1px solid #e2e8f0;">
+        <div style="font-size:12px;font-weight:800;color:#0f172a;margin-bottom:6px;">⏱ Data Retention</div>
+        <div style="font-size:11px;color:#475569;line-height:1.6;">A policy is needed: how many years do submissions live before deletion? Faculty who leave UPF-BSM — how long is their data kept? Automated deletion or anonymisation must be implemented.</div>
+      </div>
+
+      <div style="background:#f8fafc;border-radius:10px;padding:14px;border:1px solid #e2e8f0;">
+        <div style="font-size:12px;font-weight:800;color:#0f172a;margin-bottom:6px;">👤 Data Subject Rights</div>
+        <div style="font-size:11px;color:#475569;line-height:1.6;">Faculty can request a copy of their data, ask for corrections, or request deletion. A workflow (even a simple email process) must exist to honour these requests within the 30-day GDPR deadline.</div>
+      </div>
+
+      <div style="background:#f8fafc;border-radius:10px;padding:14px;border:1px solid #e2e8f0;">
+        <div style="font-size:12px;font-weight:800;color:#0f172a;margin-bottom:6px;">🇪🇸 ENS (Spain)</div>
+        <div style="font-size:11px;color:#475569;line-height:1.6;">As a Spanish public university, UPF is subject to the <strong>Esquema Nacional de Seguridad</strong>. Any production system handling staff data must demonstrate at least <strong>ENS Basic</strong> compliance — requiring documentation, access controls, and incident response procedures.</div>
+      </div>
+
+    </div>
+  </div>
+
+  <!-- ── ROW 3: Institutional risk & recommendation ── -->
+  <div style="background:linear-gradient(135deg,#0f172a,#1e3a5f);border-radius:14px;padding:22px 28px;display:grid;grid-template-columns:1fr 1fr 1fr;gap:20px;margin-bottom:16px;">
+
+    <div>
+      <div style="font-size:9.5px;font-weight:800;letter-spacing:.15em;text-transform:uppercase;color:#94a3b8;margin-bottom:8px;">🟢 Low Risk</div>
+      <div style="font-size:12px;font-weight:600;color:white;line-height:1.55;">The technology itself is sound. Supabase and Render are used by health-tech and fintech companies with stricter requirements than a faculty performance tool. The infrastructure poses no inherent compliance problem.</div>
+    </div>
+
+    <div>
+      <div style="font-size:9.5px;font-weight:800;letter-spacing:.15em;text-transform:uppercase;color:#94a3b8;margin-bottom:8px;">🟡 Medium Risk</div>
+      <div style="font-size:12px;font-weight:600;color:white;line-height:1.55;">UPF's IT governance policies may require an institutional security review before any new third-party cloud system handling staff data goes live. This process can take weeks and could require changes to the hosting setup.</div>
+    </div>
+
+    <div>
+      <div style="font-size:9.5px;font-weight:800;letter-spacing:.15em;text-transform:uppercase;color:#94a3b8;margin-bottom:8px;">🔵 Mitigation Path</div>
+      <div style="font-size:12px;font-weight:600;color:white;line-height:1.55;">Engage UPF-BSM IT and the DPO early — before building, not after. If on-premise hosting is required, the same FastAPI + PostgreSQL architecture runs on UPF servers. The code doesn't change, only the hosting layer.</div>
+    </div>
+
+  </div>
+
+  <!-- ── Pre-launch checklist ── -->
+  <div style="background:white;border-radius:14px;padding:22px 20px;border:1.5px solid #e2e8f0;box-shadow:0 2px 10px rgba(0,0,0,.05);">
+    <div style="font-size:10px;font-weight:800;letter-spacing:.14em;text-transform:uppercase;color:#94a3b8;margin-bottom:14px;">Pre-Launch Compliance Checklist</div>
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;">
+
+      <div style="display:flex;align-items:flex-start;gap:10px;background:#f8fafc;border-radius:8px;padding:10px 14px;border:1px solid #e2e8f0;">
+        <div style="width:18px;height:18px;border-radius:4px;border:2px solid #cbd5e1;flex-shrink:0;margin-top:1px;"></div>
+        <div style="font-size:11.5px;color:#334155;line-height:1.5;"><strong>Sign Supabase DPA</strong> — appoints Supabase as a GDPR data processor under UPF-BSM as controller</div>
+      </div>
+
+      <div style="display:flex;align-items:flex-start;gap:10px;background:#f8fafc;border-radius:8px;padding:10px 14px;border:1px solid #e2e8f0;">
+        <div style="width:18px;height:18px;border-radius:4px;border:2px solid #cbd5e1;flex-shrink:0;margin-top:1px;"></div>
+        <div style="font-size:11.5px;color:#334155;line-height:1.5;"><strong>Select EU region</strong> in Supabase project settings (<code style="font-family:monospace;font-size:10px;background:#e2e8f0;padding:1px 4px;border-radius:3px;">eu-central-1</code> Frankfurt)</div>
+      </div>
+
+      <div style="display:flex;align-items:flex-start;gap:10px;background:#f8fafc;border-radius:8px;padding:10px 14px;border:1px solid #e2e8f0;">
+        <div style="width:18px;height:18px;border-radius:4px;border:2px solid #cbd5e1;flex-shrink:0;margin-top:1px;"></div>
+        <div style="font-size:11.5px;color:#334155;line-height:1.5;"><strong>Complete DPIA</strong> — required under GDPR Art. 35 for systematic staff monitoring; submit to UPF DPO</div>
+      </div>
+
+      <div style="display:flex;align-items:flex-start;gap:10px;background:#f8fafc;border-radius:8px;padding:10px 14px;border:1px solid #e2e8f0;">
+        <div style="width:18px;height:18px;border-radius:4px;border:2px solid #cbd5e1;flex-shrink:0;margin-top:1px;"></div>
+        <div style="font-size:11.5px;color:#334155;line-height:1.5;"><strong>Publish faculty privacy notice</strong> — linked from the login screen; covers purpose, retention, rights</div>
+      </div>
+
+      <div style="display:flex;align-items:flex-start;gap:10px;background:#f8fafc;border-radius:8px;padding:10px 14px;border:1px solid #e2e8f0;">
+        <div style="width:18px;height:18px;border-radius:4px;border:2px solid #cbd5e1;flex-shrink:0;margin-top:1px;"></div>
+        <div style="font-size:11.5px;color:#334155;line-height:1.5;"><strong>Document lawful basis</strong> for processing (legitimate interest or employment contract) in the Records of Processing Activities (RoPA)</div>
+      </div>
+
+      <div style="display:flex;align-items:flex-start;gap:10px;background:#f8fafc;border-radius:8px;padding:10px 14px;border:1px solid #e2e8f0;">
+        <div style="width:18px;height:18px;border-radius:4px;border:2px solid #cbd5e1;flex-shrink:0;margin-top:1px;"></div>
+        <div style="font-size:11.5px;color:#334155;line-height:1.5;"><strong>Define data retention policy</strong> — set automated deletion or anonymisation schedule in the DB</div>
+      </div>
+
+      <div style="display:flex;align-items:flex-start;gap:10px;background:#f8fafc;border-radius:8px;padding:10px 14px;border:1px solid #e2e8f0;">
+        <div style="width:18px;height:18px;border-radius:4px;border:2px solid #cbd5e1;flex-shrink:0;margin-top:1px;"></div>
+        <div style="font-size:11.5px;color:#334155;line-height:1.5;"><strong>IT security review</strong> — submit architecture to UPF IT for institutional approval before production launch</div>
+      </div>
+
+      <div style="display:flex;align-items:flex-start;gap:10px;background:#f8fafc;border-radius:8px;padding:10px 14px;border:1px solid #e2e8f0;">
+        <div style="width:18px;height:18px;border-radius:4px;border:2px solid #cbd5e1;flex-shrink:0;margin-top:1px;"></div>
+        <div style="font-size:11.5px;color:#334155;line-height:1.5;"><strong>ENS Basic compliance documentation</strong> — access control policy, incident response procedure, backup policy</div>
+      </div>
+
+      <div style="display:flex;align-items:flex-start;gap:10px;background:#f8fafc;border-radius:8px;padding:10px 14px;border:1px solid #e2e8f0;">
+        <div style="width:18px;height:18px;border-radius:4px;border:2px solid #cbd5e1;flex-shrink:0;margin-top:1px;"></div>
+        <div style="font-size:11.5px;color:#334155;line-height:1.5;"><strong>Implement rate limiting &amp; security headers</strong> in FastAPI before any public-facing deployment</div>
+      </div>
+
+      <div style="display:flex;align-items:flex-start;gap:10px;background:#f8fafc;border-radius:8px;padding:10px 14px;border:1px solid #e2e8f0;">
+        <div style="width:18px;height:18px;border-radius:4px;border:2px solid #cbd5e1;flex-shrink:0;margin-top:1px;"></div>
+        <div style="font-size:11.5px;color:#334155;line-height:1.5;"><strong>Set GitHub repo to private</strong> and move all secrets to environment variables before first deployment</div>
+      </div>
+
+    </div>
+  </div>
+
+</div>
+
+<div style="text-align:center;margin-top:40px;font-size:11px;color:#94a3b8;line-height:1.7;">
+  Illustrative architecture · Subject to UPF-BSM IT security review &nbsp;·&nbsp; Supabase / Render pricing as of 2025<br>
+  UPF-BSM · SRIM · Research 4 Impact Initiative
+</div>
+
+</body>
+</html>
