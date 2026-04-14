@@ -14,11 +14,11 @@
     background: #f0f4f8;
     color: #1e293b;
     min-height: 100vh;
-    padding: 40px 24px 80px;
+    padding: 0 24px 80px;
   }
 
   /* ─── HEADER ─── */
-  .page-header { text-align: center; margin-bottom: 48px; }
+  .page-header { text-align: center; margin-top: 40px; margin-bottom: 48px; }
   .page-header .eyebrow { font-size: 11px; font-weight: 800; letter-spacing: .18em; text-transform: uppercase; color: #C8102E; margin-bottom: 8px; }
   .page-header h1 { font-size: 28px; font-weight: 900; color: #0f172a; margin-bottom: 8px; }
   .page-header p { font-size: 13px; color: #64748b; max-width: 640px; margin: 0 auto; line-height: 1.65; }
@@ -351,9 +351,59 @@
   .merge-entry {
     width: 100%; max-width: 900px; display: flex; flex-direction: column; align-items: center;
   }
+
+  /* ── Tool nav toggle ── */
+  .tool-nav {
+    position: sticky;
+    top: 0;
+    z-index: 40;
+    background: #fff;
+    border-bottom: 1.5px solid #e2e8f0;
+    box-shadow: 0 1px 6px rgba(0,0,0,.06);
+  }
+  .tool-nav-inner {
+    max-width: 72rem;
+    margin: 0 auto;
+    padding: 0 1.5rem;
+    display: flex;
+    gap: 4px;
+    align-items: center;
+    height: 44px;
+  }
+  .nav-btn {
+    display: inline-flex;
+    align-items: center;
+    padding: 5px 14px;
+    border-radius: 8px;
+    font-size: 12px;
+    font-weight: 700;
+    color: #64748b;
+    text-decoration: none;
+    border: 1.5px solid transparent;
+    -webkit-transition: all 0.15s;
+    transition: all 0.15s;
+    white-space: nowrap;
+  }
+  .nav-btn:hover { background: #f1f5f9; color: #0f172a; border-color: #e2e8f0; }
+  .nav-btn-active { background: #fff1f2; color: #C8102E; border-color: #fecdd3; }
+  .nav-btn-active:hover { background: #ffe4e6; color: #C8102E; }
+  @media print { .tool-nav { display: none !important; } }
+
 </style>
 </head>
 <body>
+<!-- ── TOOL NAV TOGGLE ── -->
+<nav class="tool-nav" role="navigation" aria-label="Tool navigation">
+  <div class="tool-nav-inner">
+    <a href="about.html" class="nav-btn">About</a>
+    <a href="index.html" class="nav-btn">Excellence Matrix</a>
+    <a href="srim-reporting-tool.html" class="nav-btn">SRIM Self-Report</a>
+    <a href="srim-flowchart.html" class="nav-btn">Flowchart</a>
+    <a href="architecture.html" class="nav-btn">Architecture</a>
+    <a href="document-validation.html" class="nav-btn nav-btn-active" aria-current="page">Doc Validation</a>
+  </div>
+</nav>
+
 
 <!-- ═══════════════════════════════════ HEADER ═══════════════════════════════════ -->
 <div class="page-header">
