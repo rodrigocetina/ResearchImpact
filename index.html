@@ -23,6 +23,7 @@
   
     /* ── Tool nav toggle ── */
     .tool-nav {
+      position: -webkit-sticky;
       position: sticky;
       top: 0;
       z-index: 40;
@@ -33,11 +34,14 @@
     .tool-nav-inner {
       max-width: 72rem;
       margin: 0 auto;
-      padding: 0 1.5rem;
+      padding: 0 1rem;
       display: flex;
       gap: 4px;
       align-items: center;
-      height: 44px;
+      min-height: 44px;
+      flex-wrap: wrap;
+      padding-top: 4px;
+      padding-bottom: 4px;
     }
     .nav-btn {
       display: inline-flex;
@@ -58,6 +62,7 @@
     .nav-btn-active:hover { background: #ffe4e6; color: #C8102E; }
     @media print { .tool-nav { display: none !important; } }
   </style>
+  <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'%3E%3Ctext y='.9em' font-size='90'%3E🎓%3C/text%3E%3C/svg%3E">
 </head>
 <body class="min-h-screen bg-slate-50 p-4 md:p-8 text-slate-900">
 <div class="max-w-7xl mx-auto">
